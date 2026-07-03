@@ -1,0 +1,148 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isNotBanned() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+
+    // ── Users ──────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Users can read their own data; admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      // Users can create their own document during registration
+      allow create: if isOwner(userId) && isAuthenticated();
+      // Users can only update their own data (limited fields); admins can update anything
+      allow update: if (isOwner(userId) && isNotBanned() &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['isAdmin', 'coins', 'totalEarned', 'totalRedeemed', 'referralCount']))
+        || isAdmin();
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // ── Transactions ───────────────────────────────────────────────────────
+    match /transactions/{txId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      // Only server-side (Cloud Functions/admin SDK) should write; 
+      // allow create from client for now with own userId
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isNotBanned();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Withdrawals ────────────────────────────────────────────────────────
+    match /withdrawals/{wId} {
+      // Users read their own withdrawals; admins read all
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can create withdrawal requests
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isNotBanned() &&
+        request.resource.data.status == 'pending';
+      // Only admins can approve/reject
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Redeem Codes ───────────────────────────────────────────────────────
+    match /redeemCodes/{codeId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ── Referrals ──────────────────────────────────────────────────────────
+    match /referrals/{refId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.referrerId == request.auth.uid ||
+         resource.data.referredUserId == request.auth.uid ||
+         isAdmin());
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Daily Rewards ──────────────────────────────────────────────────────
+    match /dailyRewards/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isNotBanned();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Ad Rewards ─────────────────────────────────────────────────────────
+    match /adRewards/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isNotBanned();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Spin History ───────────────────────────────────────────────────────
+    match /spinHistory/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isNotBanned();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Scratch History ────────────────────────────────────────────────────
+    match /scratchHistory/{docId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isNotBanned();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Notifications ──────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Settings ───────────────────────────────────────────────────────────
+    match /settings/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /settings/{docId}/items/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ── Banned Users ───────────────────────────────────────────────────────
+    match /bannedUsers/{userId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ── Admin Logs ─────────────────────────────────────────────────────────
+    match /adminLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

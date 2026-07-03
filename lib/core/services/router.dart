@@ -1,0 +1,87 @@
+// lib/core/services/router.dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../presentation/pages/splash/splash_page.dart';
+import '../../presentation/pages/onboarding/onboarding_page.dart';
+import '../../presentation/pages/auth/login_page.dart';
+import '../../presentation/pages/auth/register_page.dart';
+import '../../presentation/pages/home/main_shell.dart';
+import '../../presentation/pages/home/home_page.dart';
+import '../../presentation/pages/redeem/redeem_page.dart';
+import '../../presentation/pages/history/history_page.dart';
+import '../../presentation/pages/profile/profile_page.dart';
+import '../../presentation/pages/games/scratch_page.dart';
+import '../../presentation/pages/games/spin_page.dart';
+import '../../presentation/pages/admin/admin_dashboard.dart';
+import '../../presentation/providers/auth_provider.dart';
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/splash',
+    redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
+      final isLoggedIn = authState.value != null;
+      final isGoingToAuth = state.matchedLocation.startsWith('/login') ||
+          state.matchedLocation.startsWith('/register') ||
+          state.matchedLocation.startsWith('/onboarding');
+      final isGoingToSplash = state.matchedLocation == '/splash';
+
+      if (isGoingToSplash) return null;
+      if (!isLoggedIn && !isGoingToAuth) return '/login';
+      if (isLoggedIn && isGoingToAuth) return '/home';
+      return null;
+    },
+    routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashPage(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingPage(),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterPage(),
+      ),
+      ShellRoute(
+        builder: (context, state, child) => MainShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const HomePage(),
+          ),
+          GoRoute(
+            path: '/redeem',
+            builder: (context, state) => const RedeemPage(),
+          ),
+          GoRoute(
+            path: '/history',
+            builder: (context, state) => const HistoryPage(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfilePage(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/scratch',
+        builder: (context, state) => const ScratchPage(),
+      ),
+      GoRoute(
+        path: '/spin',
+        builder: (context, state) => const SpinPage(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminDashboard(),
+      ),
+    ],
+  );
+});
