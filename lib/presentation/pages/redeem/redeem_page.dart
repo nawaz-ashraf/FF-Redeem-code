@@ -128,7 +128,6 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                               context,
                               _packages[i],
                               userAsync.value?.uid ?? '',
-                              userAsync.value?.freeFireUID ?? '',
                             ),
                           )
                               .animate(delay: (i * 100).ms)
@@ -157,7 +156,13 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                                     .toList(),
                               ),
                         loading: () => const CircularProgressIndicator(),
-                        error: (e, _) => Text('Error: $e'),
+                        error: (e, _) {
+                          debugPrint('Withdrawals Error: $e');
+                          return const Text(
+                            'Could not load request history. Please try again later.',
+                            style: TextStyle(color: AppColors.textSecondary),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -243,8 +248,10 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
     BuildContext context,
     _RedeemPackage package,
     String userId,
-    String ffUid,
   ) {
+    final uidController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -257,30 +264,53 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
               .headlineSmall
               ?.copyWith(fontWeight: FontWeight.w800),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Package: ${package.name}',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Cost: ${package.coins} coins',
-              style: TextStyle(
-                  color: AppColors.error, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '⚠️ Your request will be reviewed by admin. Coins are deducted only after approval.',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.warning,
-                height: 1.4,
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Package: ${package.name}',
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'Cost: ${package.coins} coins',
+                style: TextStyle(
+                    color: AppColors.error, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: uidController,
+                decoration: InputDecoration(
+                  labelText: 'Enter your Game UID',
+                  hintText: 'e.g. 123456789',
+                  filled: true,
+                  fillColor: AppColors.surfaceLight,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return 'Game UID is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '⚠️ Your request will be reviewed by admin. Coins are deducted only after approval.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.warning,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -290,8 +320,10 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(ctx);
-              await _submitRequest(package, userId, ffUid);
+              if (formKey.currentState?.validate() ?? false) {
+                Navigator.pop(ctx);
+                await _submitRequest(package, userId, uidController.text.trim());
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
@@ -429,17 +461,18 @@ class _RedeemPackageCard extends StatelessWidget {
                   backgroundColor: Colors.white,
                   foregroundColor: package.gradient.colors.first,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                   disabledBackgroundColor:
                       Colors.white.withOpacity(0.3),
+                  minimumSize: const Size(80, 36),
                 ),
                 child: Text(
                   canAfford ? 'Redeem' : 'Need More',
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                 ),
               ),

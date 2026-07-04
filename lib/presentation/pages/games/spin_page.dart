@@ -6,8 +6,9 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/reward_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../../core/services/ad_service.dart';
 
 class SpinPage extends ConsumerStatefulWidget {
   const SpinPage({super.key});
@@ -45,6 +46,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
     _spinController = AnimationController(vsync: this);
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 3));
+    AdService.loadRewardedAd();
   }
 
   @override
@@ -56,6 +58,23 @@ class _SpinPageState extends ConsumerState<SpinPage>
 
   Future<void> _spin() async {
     if (_isSpinning) return;
+
+    if (!AdService.isRewardedAdReady) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ad is still loading. Please wait...')),
+      );
+      AdService.loadRewardedAd();
+      return;
+    }
+    
+    bool adSuccess = false;
+    await AdService.showRewardedAd(
+      onUserEarnedReward: (_) {
+        adSuccess = true;
+      },
+    );
+    
+    if (!adSuccess) return;
 
     setState(() {
       _isSpinning = true;
@@ -97,6 +116,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
         _isSpinning = false;
         _reward = reward;
       });
+      AdService.loadRewardedAd();
 
       if (reward != null) {
         _confettiController.play();
@@ -295,14 +315,21 @@ class _SpinPageState extends ConsumerState<SpinPage>
                                   strokeWidth: 2.5,
                                 ),
                               )
-                            : const Text(
-                                'SPIN! 🎡',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 1,
-                                ),
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.play_arrow, color: Colors.white),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'UNLOCK SPIN',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                ],
                               ),
                       ),
                     ),

@@ -5,8 +5,9 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/reward_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../../core/services/ad_service.dart';
 
 class ScratchPage extends ConsumerStatefulWidget {
   const ScratchPage({super.key});
@@ -23,6 +24,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
 
   bool _isScratching = false;
   bool _isRevealed = false;
+  bool _isAdWatched = false;
   int? _reward;
   int _scratchPercent = 0;
   List<Offset> _scratchedAreas = [];
@@ -39,6 +41,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
     );
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 3));
+    AdService.loadRewardedAd();
   }
 
   @override
@@ -51,6 +54,31 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
   Future<void> _claimReward() async {
     final user = ref.read(currentUserProvider).value;
     if (user == null) return;
+
+    if (!_isAdWatched) {
+      if (!AdService.isRewardedAdReady) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ad is still loading. Please wait...')),
+        );
+        AdService.loadRewardedAd();
+        return;
+      }
+      
+      bool adSuccess = false;
+      await AdService.showRewardedAd(
+        onUserEarnedReward: (_) {
+          adSuccess = true;
+        },
+      );
+      
+      if (adSuccess) {
+        setState(() => _isAdWatched = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Card Unlocked! Start scratching!')),
+        );
+      }
+      return;
+    }
 
     setState(() => _isScratching = true);
 
@@ -80,7 +108,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
   }
 
   void _handleScratch(DragUpdateDetails details) {
-    if (_isRevealed) return;
+    if (_isRevealed || !_isAdWatched) return;
     setState(() {
       _scratchedAreas.add(details.localPosition);
       _scratchPercent = (_scratchedAreas.length * 100 ~/ 300).clamp(0, 100);
@@ -154,7 +182,11 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                       onTap: _isRevealed
                           ? null
                           : () {
-                              _shakeController.forward(from: 0);
+                              if (!_isAdWatched) {
+                                _claimReward(); // This triggers the ad flow
+                              } else {
+                                _shakeController.forward(from: 0);
+                              }
                             },
                       child: _buildScratchCard(),
                     ),
@@ -174,7 +206,20 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        if (!_isAdWatched) ...[
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _claimReward,
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('Watch Ad to Unlock'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
                         Text(
                           'Possible rewards: ${AppConstants.scratchRewards.map((r) => '+$r').join(', ')} coins',
                           style: TextStyle(
@@ -200,10 +245,12 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                           onPressed: () {
                             setState(() {
                               _isRevealed = false;
+                              _isAdWatched = false;
                               _reward = null;
                               _scratchedAreas = [];
                               _scratchPercent = 0;
                             });
+                            AdService.loadRewardedAd();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.surfaceLight,
@@ -311,7 +358,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Tap & Scratch to Reveal',
+                        _isAdWatched ? 'Tap & Scratch to Reveal' : 'Locked',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 16,
@@ -319,6 +366,15 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                         ),
                       ),
                       const SizedBox(height: 8),
+                      if (!_isAdWatched)
+                         Text(
+                          'Watch an ad to unlock',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      if (_isAdWatched)
                       // Progress bar
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),

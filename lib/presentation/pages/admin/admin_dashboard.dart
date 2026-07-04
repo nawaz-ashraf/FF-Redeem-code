@@ -305,7 +305,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
           padding: const EdgeInsets.all(16),
           child: TextField(
             decoration: const InputDecoration(
-              hintText: 'Search by name or FF UID...',
+              hintText: 'Search by name or Game ID...',
               prefixIcon: Icon(Icons.search),
               border: OutlineInputBorder(),
               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -379,7 +379,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                                       fontWeight: FontWeight.w700),
                                 ),
                                 Text(
-                                  'UID: ${user.freeFireUID} • ${user.coins} coins',
+                                  'ID: ${user.uuid.substring(0, 8).toUpperCase()} • ${user.coins} coins',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
@@ -535,7 +535,7 @@ class _AdminWithdrawalCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'FF UID: ${withdrawal.freeFireUID}',
+                      'Game ID: ${withdrawal.freeFireUID}',
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 13,

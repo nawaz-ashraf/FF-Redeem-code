@@ -24,7 +24,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _confirmPasswordCtrl = TextEditingController();
-  final _ffUidCtrl = TextEditingController();
+
   final _referralCtrl = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -37,7 +37,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
-    _ffUidCtrl.dispose();
+
     _referralCtrl.dispose();
     super.dispose();
   }
@@ -61,7 +61,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             name: _nameCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
             password: _passwordCtrl.text,
-            freeFireUID: _ffUidCtrl.text.trim(),
+
             referralCode: _referralCtrl.text.trim().isEmpty
                 ? null
                 : _referralCtrl.text.trim().toUpperCase(),
@@ -155,31 +155,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     },
                   ).animate(delay: 150.ms).slideY(begin: 0.3, duration: 400.ms).fade(),
                   const SizedBox(height: 16),
-                  // FF UID
-                  AppTextField(
-                    controller: _ffUidCtrl,
-                    label: 'Free Fire UID',
-                    hint: 'Enter your FF UID (e.g. 123456789)',
-                    prefixIcon: Icons.gamepad_outlined,
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Free Fire UID is required';
-                      if (v.length < 6) return 'UID too short';
-                      return null;
-                    },
-                  ).animate(delay: 200.ms).slideY(begin: 0.3, duration: 400.ms).fade(),
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: Text(
-                      '⚠️ One Free Fire UID can only be registered once',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.warning,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+
                   // Password
                   AppTextField(
                     controller: _passwordCtrl,

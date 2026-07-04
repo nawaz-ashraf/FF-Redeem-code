@@ -5,77 +5,83 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   AppColors._();
 
+  // Primary Backgrounds
   static const Color background = Color(0xFF10131D);
-  static const Color surface = Color(0xFF1A2238);
-  static const Color surfaceLight = Color(0xFF222D45);
-  static const Color surfaceCard = Color(0xFF1E2A42);
+  static const Color surface = Color(0xFF171E2E);
+  static const Color surfaceLight = Color(0xFF1F2942); // Card Background
+  static const Color surfaceCard = Color(0xFF1F2942);
 
-  static const Color primary = Color(0xFFFF6B35);
+  // Navigation & Dividers
+  static const Color navigation = Color(0xFF131B2C);
+  static const Color divider = Color(0xFF28324A);
+  static const Color border = Color(0xFF28324A);
+  static const Color borderLight = Color(0xFF3D5080);
+
+  // Accent Colors (From Part 3 Spec)
+  static const Color primary = Color(0xFFFF7A2F); // Orange
+  static const Color accent1 = Color(0xFF8B5CF6); // Purple
+  static const Color accent2 = Color(0xFF3B82F6); // Blue
+  static const Color accent3 = Color(0xFF22C55E); // Green
+  static const Color accent4 = Color(0xFFEF4444); // Red
+  static const Color gold = Color(0xFFFACC15); // Gold
+
+  // Other colors maintained for compatibility
   static const Color primaryDark = Color(0xFFE5531A);
   static const Color primaryLight = Color(0xFFFF8C5A);
-
-  static const Color accent1 = Color(0xFF7B2FBE); // Purple
-  static const Color accent2 = Color(0xFF2F80ED); // Blue
-  static const Color accent3 = Color(0xFF27AE60); // Green
-  static const Color accent4 = Color(0xFFEB5757); // Red
-
-  static const Color gold = Color(0xFFFFD700);
   static const Color goldLight = Color(0xFFFFF3B0);
-  static const Color coin = Color(0xFFFFC107);
+  static const Color coin = Color(0xFFFACC15);
 
+  // Text Colors
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0BEC5);
   static const Color textHint = Color(0xFF607D8B);
   static const Color textDisabled = Color(0xFF455A64);
 
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFFC107);
-  static const Color error = Color(0xFFF44336);
-  static const Color info = Color(0xFF2196F3);
-
-  static const Color divider = Color(0xFF263550);
-  static const Color border = Color(0xFF2D3D5A);
-  static const Color borderLight = Color(0xFF3D5080);
+  // Status Colors mapped to Accents
+  static const Color success = Color(0xFF22C55E);
+  static const Color warning = Color(0xFFFACC15);
+  static const Color error = Color(0xFFEF4444);
+  static const Color info = Color(0xFF3B82F6);
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFFF6B35), Color(0xFFFF3D00)],
+    colors: [Color(0xFFFF7A2F), Color(0xFFFF3D00)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient purpleGradient = LinearGradient(
-    colors: [Color(0xFF7B2FBE), Color(0xFF4A00E0)],
+    colors: [Color(0xFF8B5CF6), Color(0xFF4A00E0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient blueGradient = LinearGradient(
-    colors: [Color(0xFF2F80ED), Color(0xFF1565C0)],
+    colors: [Color(0xFF3B82F6), Color(0xFF1565C0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient greenGradient = LinearGradient(
-    colors: [Color(0xFF27AE60), Color(0xFF1B7A43)],
+    colors: [Color(0xFF22C55E), Color(0xFF1B7A43)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient goldGradient = LinearGradient(
-    colors: [Color(0xFFFFD700), Color(0xFFFF8F00)],
+    colors: [Color(0xFFFACC15), Color(0xFFFF8F00)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient backgroundGradient = LinearGradient(
-    colors: [Color(0xFF10131D), Color(0xFF151B2E)],
+    colors: [Color(0xFF10131D), Color(0xFF171E2E)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF1E2A42), Color(0xFF172035)],
+    colors: [Color(0xFF1F2942), Color(0xFF172035)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -100,7 +106,7 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
         onError: Colors.white,
       ),
-      textTheme: GoogleFonts.interTextTheme(
+      textTheme: GoogleFonts.poppinsTextTheme(
         const TextTheme(
           displayLarge: TextStyle(
             color: AppColors.textPrimary,
@@ -184,7 +190,7 @@ class AppTheme {
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.navigation,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textHint,
         elevation: 20,
@@ -203,9 +209,10 @@ class AppTheme {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 0,
+          elevation: 4,
+          shadowColor: AppColors.primary.withOpacity(0.5),
           textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -263,3 +270,4 @@ class AppTheme {
     );
   }
 }
+

@@ -66,22 +66,5 @@ class AppUtils {
     return '${code.substring(0, 4)}${'*' * (code.length - 4)}';
   }
 
-  static Map<String, dynamic> getLevelInfo(int xp) {
-    const levels = [
-      {'level': 1, 'name': 'Rookie', 'minXP': 0, 'maxXP': 100},
-      {'level': 2, 'name': 'Warrior', 'minXP': 100, 'maxXP': 300},
-      {'level': 3, 'name': 'Elite', 'minXP': 300, 'maxXP': 600},
-      {'level': 4, 'name': 'Diamond', 'minXP': 600, 'maxXP': 1000},
-      {'level': 5, 'name': 'Heroic', 'minXP': 1000, 'maxXP': 1500},
-      {'level': 6, 'name': 'Grandmaster', 'minXP': 1500, 'maxXP': 2500},
-      {'level': 7, 'name': 'Legend', 'minXP': 2500, 'maxXP': 999999},
-    ];
 
-    for (final level in levels.reversed) {
-      if (xp >= (level['minXP'] as int)) {
-        return level;
-      }
-    }
-    return levels.first;
-  }
 }

@@ -33,21 +33,8 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
-    required String freeFireUID,
     String? referralCode,
   }) async {
-    // 1. Validate Free Fire UID not already registered
-    final uidQuery = await _firestore
-        .collection(AppConstants.usersCollection)
-        .where('freeFireUID', isEqualTo: freeFireUID)
-        .limit(1)
-        .get();
-
-    if (uidQuery.docs.isNotEmpty) {
-      throw const DuplicateAccountException(
-        message: 'This Free Fire UID is already registered.',
-      );
-    }
 
     // 2. Device ID check — one device, one UID, one registration
     final deviceId = await _getDeviceId();
@@ -110,10 +97,11 @@ class AuthRepository {
 
     // 6. Create user document
     final now = DateTime.now();
+    final newUuid = const Uuid().v4();
     final user = UserModel(
       uid: userId,
       name: name,
-      freeFireUID: freeFireUID,
+      uuid: newUuid,
       deviceId: deviceId,
       email: email,
       coins: 0,
@@ -131,8 +119,6 @@ class AuthRepository {
       isBanned: false,
       isAdmin: false,
       dailyStreak: 0,
-      xp: 0,
-      level: 1,
       createdAt: now,
     );
 
@@ -166,7 +152,6 @@ class AuthRepository {
         'coins': FieldValue.increment(AppConstants.referralCoins),
         'referralCount': FieldValue.increment(1),
         'totalEarnedCoins': FieldValue.increment(AppConstants.referralCoins),
-        'xp': FieldValue.increment(AppConstants.referralCoins),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 

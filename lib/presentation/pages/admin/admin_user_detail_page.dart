@@ -237,7 +237,7 @@ class _ProfileTab extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'FF UID: ${user.freeFireUID}',
+                  'ID: ${user.uuid.substring(0, 8).toUpperCase()}',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,

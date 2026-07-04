@@ -133,12 +133,7 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Widget _buildHomeContent(UserModel user) {
-    final levelInfo = AppUtils.getLevelInfo(user.xp);
-    final maxXP = levelInfo['maxXP'] as int;
-    final minXP = levelInfo['minXP'] as int;
-    final xpProgress = maxXP > minXP
-        ? ((user.xp - minXP) / (maxXP - minXP)).clamp(0.0, 1.0)
-        : 1.0;
+    // XP system removed
 
     return Container(
       decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
@@ -166,7 +161,7 @@ class _HomePageState extends ConsumerState<HomePage>
                           ),
                         ),
                         Text(
-                          '${levelInfo['name']} • ${user.freeFireUID}',
+                          'ID: ${user.uuid.substring(0, 8).toUpperCase()}',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -191,7 +186,7 @@ class _HomePageState extends ConsumerState<HomePage>
                     const SizedBox(height: 16),
 
                     // Coin balance card
-                    _buildCoinCard(user, levelInfo, xpProgress)
+                    _buildStatsCard(user)
                         .animate()
                         .slideY(begin: 0.3, duration: 500.ms)
                         .fade(duration: 500.ms),
@@ -268,8 +263,7 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
-  Widget _buildCoinCard(
-      UserModel user, Map<String, dynamic> levelInfo, double xpProgress) {
+  Widget _buildStatsCard(UserModel user) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -301,7 +295,7 @@ class _HomePageState extends ConsumerState<HomePage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Total Balance',
+                      'Current Balance',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -366,46 +360,14 @@ class _HomePageState extends ConsumerState<HomePage>
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // XP bar
+          const SizedBox(height: 24),
           Row(
             children: [
-              Text(
-                '${levelInfo['name']} (Lv.${levelInfo['level']})',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${user.xp} / ${levelInfo['maxXP']} XP',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textHint,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: xpProgress,
-              backgroundColor: AppColors.surface,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              minHeight: 8,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildStatChip('💎', '${user.referralCount}', 'Referrals'),
-              const SizedBox(width: 12),
               _buildStatChip('📊', user.totalEarnedCoins.toString(), 'Total Earned'),
               const SizedBox(width: 8),
               _buildStatChip('✅', user.totalRedeemedCoins.toString(), 'Redeemed'),
+              const SizedBox(width: 8),
+              _buildStatChip('👥', '${user.referralCount}', 'Referrals'),
             ],
           ),
         ],

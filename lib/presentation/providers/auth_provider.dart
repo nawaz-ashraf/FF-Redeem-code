@@ -51,7 +51,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     required String name,
     required String email,
     required String password,
-    required String freeFireUID,
     String? referralCode,
   }) async {
     state = const AsyncValue.loading();
@@ -60,7 +59,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         name: name,
         email: email,
         password: password,
-        freeFireUID: freeFireUID,
         referralCode: referralCode,
       );
       state = AsyncValue.data(user);

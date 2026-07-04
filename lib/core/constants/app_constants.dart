@@ -12,8 +12,8 @@ class AppConstants {
   static const int dailyLoginCoins = 5;
   static const int referralCoins = 20;
   static const int maxDailyAds = 30;
-  static const int maxDailyScratch = 2;
-  static const int maxDailySpin = 2;
+  static const int maxDailyScratch = 3;
+  static const int maxDailySpin = 3;
 
   // Redeem packages
   static const Map<String, int> redeemPackages = {
@@ -93,12 +93,12 @@ class AppConstants {
   // Streak bonuses (day -> coins)
   static const Map<int, int> streakBonuses = {
     1: 5,
-    2: 8,
-    3: 12,
-    4: 15,
-    5: 20,
-    6: 25,
-    7: 50,
+    2: 6,
+    3: 7,
+    4: 8,
+    5: 9,
+    6: 10,
+    7: 11,
   };
 
   // XP levels

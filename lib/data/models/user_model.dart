@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserModel {
   final String uid;
   final String name;
-  final String freeFireUID;
+  final String uuid;
   final String deviceId;
   final String? email;
   final String? profileImage;
@@ -42,8 +42,7 @@ class UserModel {
 
   // Gamification
   final int dailyStreak;
-  final int xp;
-  final int level;
+  final DateTime? lastDailyReset;
 
   // Metadata
   final DateTime createdAt;
@@ -56,7 +55,7 @@ class UserModel {
   const UserModel({
     required this.uid,
     required this.name,
-    required this.freeFireUID,
+    required this.uuid,
     required this.deviceId,
     this.email,
     this.profileImage,
@@ -80,8 +79,7 @@ class UserModel {
     required this.isBanned,
     required this.isAdmin,
     required this.dailyStreak,
-    required this.xp,
-    required this.level,
+    this.lastDailyReset,
     required this.createdAt,
     this.updatedAt,
     this.achievements,
@@ -93,7 +91,7 @@ class UserModel {
     return UserModel(
       uid: doc.id,
       name: data['name'] ?? '',
-      freeFireUID: data['freeFireUID'] ?? data['ffUid'] ?? '',
+      uuid: data['uuid'] ?? doc.id,
       deviceId: data['deviceId'] ?? '',
       email: data['email'],
       profileImage: data['profileImage'] ?? data['profilePicUrl'],
@@ -119,8 +117,7 @@ class UserModel {
       isBanned: data['isBanned'] ?? (data['status'] == 'banned'),
       isAdmin: data['isAdmin'] ?? false,
       dailyStreak: (data['dailyStreak'] ?? 0).toInt(),
-      xp: (data['xp'] ?? 0).toInt(),
-      level: (data['level'] ?? 1).toInt(),
+      lastDailyReset: _toDateTime(data['lastDailyReset']),
       createdAt: _toDateTime(data['createdAt'] ?? data['registrationDate']) ??
           DateTime.now(),
       updatedAt: _toDateTime(data['updatedAt'] ?? data['lastUpdated']),
@@ -132,7 +129,7 @@ class UserModel {
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
-      'freeFireUID': freeFireUID,
+      'uuid': uuid,
       'deviceId': deviceId,
       'email': email,
       'profileImage': profileImage,
@@ -160,8 +157,7 @@ class UserModel {
       'isBanned': isBanned,
       'isAdmin': isAdmin,
       'dailyStreak': dailyStreak,
-      'xp': xp,
-      'level': level,
+      'lastDailyReset': lastDailyReset != null ? Timestamp.fromDate(lastDailyReset!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': FieldValue.serverTimestamp(),
       'achievements': achievements,
@@ -171,7 +167,7 @@ class UserModel {
 
   UserModel copyWith({
     String? name,
-    String? freeFireUID,
+    String? uuid,
     String? email,
     String? profileImage,
     int? coins,
@@ -191,15 +187,14 @@ class UserModel {
     String? accountStatus,
     bool? isBanned,
     int? dailyStreak,
-    int? xp,
-    int? level,
+    DateTime? lastDailyReset,
     Map<String, dynamic>? achievements,
     String? fcmToken,
   }) {
     return UserModel(
       uid: uid,
       name: name ?? this.name,
-      freeFireUID: freeFireUID ?? this.freeFireUID,
+      uuid: uuid ?? this.uuid,
       deviceId: deviceId,
       email: email ?? this.email,
       profileImage: profileImage ?? this.profileImage,
@@ -223,8 +218,7 @@ class UserModel {
       isBanned: isBanned ?? this.isBanned,
       isAdmin: isAdmin,
       dailyStreak: dailyStreak ?? this.dailyStreak,
-      xp: xp ?? this.xp,
-      level: level ?? this.level,
+      lastDailyReset: lastDailyReset ?? this.lastDailyReset,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
       achievements: achievements ?? this.achievements,

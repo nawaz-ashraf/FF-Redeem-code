@@ -35,7 +35,6 @@ class ProfilePage extends ConsumerWidget {
 
   Widget _buildProfile(
       BuildContext context, WidgetRef ref, UserModel user) {
-    final levelInfo = AppUtils.getLevelInfo(user.xp);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -123,28 +122,11 @@ class ProfilePage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'FF UID: ${user.freeFireUID}',
+                    'ID: ${user.uuid.substring(0, 8).toUpperCase()}',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.goldGradient,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${levelInfo['name']} • Level ${levelInfo['level']}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

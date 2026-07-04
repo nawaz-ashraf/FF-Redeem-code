@@ -59,7 +59,6 @@ class UserRepository {
       tx.update(userRef, {
         'coins': FieldValue.increment(coins),
         'totalEarnedCoins': FieldValue.increment(coins),
-        'xp': FieldValue.increment(coins ~/ 2),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -174,7 +173,6 @@ class UserRepository {
         'dailyStreak': newStreak,
         'coins': FieldValue.increment(streakBonus),
         'totalEarnedCoins': FieldValue.increment(streakBonus),
-        'xp': FieldValue.increment(streakBonus ~/ 2),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
@@ -328,11 +326,12 @@ class UserRepository {
     }
 
     return query
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => TransactionModel.fromFirestore(d)).toList());
+        .map((snap) {
+          final list = snap.docs.map((d) => TransactionModel.fromFirestore(d)).toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list.take(limit).toList();
+        });
   }
 
   /// Get paginated transactions
@@ -350,16 +349,14 @@ class UserRepository {
       query = query.where('type', isEqualTo: typeFilter);
     }
 
-    query = query.orderBy('createdAt', descending: true).limit(limit);
-
-    if (lastDoc != null) {
-      query = query.startAfterDocument(lastDoc);
-    }
-
+    // Fetch without orderBy to avoid composite index requirement
+    // In a real production app, you would create the index in Firebase Console
     final snap = await query.get();
-    return snap.docs
+    final list = snap.docs
         .map((d) => TransactionModel.fromFirestore(d))
         .toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list.take(limit).toList();
   }
 
   /// Update FCM token for push notifications
