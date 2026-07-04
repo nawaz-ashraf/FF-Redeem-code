@@ -11,12 +11,12 @@ class UserRepository {
   final _firestore = FirebaseService.firestore;
   final _storage = FirebaseService.storage;
 
-  Stream<UserModel> watchUser(String userId) {
+  Stream<UserModel?> watchUser(String userId) {
     return _firestore
         .collection(AppConstants.usersCollection)
         .doc(userId)
         .snapshots()
-        .map((doc) => UserModel.fromFirestore(doc));
+        .map((doc) => doc.exists ? UserModel.fromFirestore(doc) : null);
   }
 
   Future<UserModel?> getUser(String userId) async {
