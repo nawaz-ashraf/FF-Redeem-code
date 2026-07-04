@@ -13,7 +13,12 @@ import '../../presentation/pages/history/history_page.dart';
 import '../../presentation/pages/profile/profile_page.dart';
 import '../../presentation/pages/games/scratch_page.dart';
 import '../../presentation/pages/games/spin_page.dart';
+import '../../presentation/pages/games/watch_ads_page.dart';
+import '../../presentation/pages/settings/settings_page.dart';
+import '../../presentation/pages/notifications/notifications_page.dart';
 import '../../presentation/pages/admin/admin_dashboard.dart';
+import '../../presentation/pages/admin/admin_redeem_codes_page.dart';
+import '../../presentation/pages/admin/admin_user_detail_page.dart';
 import '../../presentation/providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -79,8 +84,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SpinPage(),
       ),
       GoRoute(
+        path: '/watch-ads',
+        builder: (context, state) => const WatchAdsPage(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsPage(),
+      ),
+      GoRoute(
         path: '/admin',
         builder: (context, state) => const AdminDashboard(),
+        routes: [
+          GoRoute(
+            path: 'redeem-codes',
+            builder: (context, state) => const AdminRedeemCodesPage(),
+          ),
+          GoRoute(
+            path: 'user/:userId',
+            builder: (context, state) {
+              final userId = state.pathParameters['userId']!;
+              return AdminUserDetailPage(userId: userId);
+            },
+          ),
+        ],
       ),
     ],
   );

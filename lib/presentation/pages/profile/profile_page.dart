@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../providers/auth_provider.dart';
 import '../../../data/models/user_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -72,10 +73,10 @@ class ProfilePage extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        child: user.profilePicUrl != null
+                        child: user.profileImage != null
                             ? ClipOval(
-                                child: Image.network(
-                                  user.profilePicUrl!,
+                                child: CachedNetworkImage(
+                                  imageUrl: user.profileImage!,
                                   fit: BoxFit.cover,
                                 ),
                               )
@@ -122,7 +123,7 @@ class ProfilePage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'FF UID: ${user.ffUid}',
+                    'FF UID: ${user.freeFireUID}',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -296,12 +297,12 @@ class ProfilePage extends ConsumerWidget {
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 16),
-                    _buildStatRow('💰 Total Earned', '${user.totalEarned} coins'),
+                    _buildStatRow('💰 Total Earned', '${user.totalEarnedCoins} coins'),
                     _buildStatRow(
-                        '💎 Total Redeemed', '${user.totalRedeemed} coins'),
+                        '💎 Total Redeemed', '${user.totalRedeemedCoins} coins'),
                     _buildStatRow('📅 Member Since',
-                        AppUtils.formatDate(user.registrationDate)),
-                    _buildStatRow('✉️ Email', user.email),
+                        AppUtils.formatDate(user.createdAt)),
+                    _buildStatRow('✉️ Email', user.email ?? 'N/A'),
                   ],
                 ),
               ),

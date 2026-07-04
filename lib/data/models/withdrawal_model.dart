@@ -14,94 +14,113 @@ extension WithdrawalStatusExt on WithdrawalStatus {
         return 'Rejected';
     }
   }
+
+  static WithdrawalStatus fromString(String? value) {
+    switch (value) {
+      case 'approved':
+        return WithdrawalStatus.approved;
+      case 'rejected':
+        return WithdrawalStatus.rejected;
+      default:
+        return WithdrawalStatus.pending;
+    }
+  }
 }
 
 class WithdrawalModel {
-  final String id;
+  final String withdrawalId;
   final String userId;
-  final String ffUid;
-  final String packageName;
-  final int coinAmount;
+  final String freeFireUID;
+  final String package;
+  final int coinCost;
   final String packageValue; // e.g., "₹100"
   final WithdrawalStatus status;
-  final String? redeemCode;
-  final String? adminNotes;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
+  final String? assignedRedeemCode;
+  final String? adminRemark;
+  final DateTime requestedAt;
+  final DateTime? approvedAt;
+  final DateTime? completedAt;
 
   const WithdrawalModel({
-    required this.id,
+    required this.withdrawalId,
     required this.userId,
-    required this.ffUid,
-    required this.packageName,
-    required this.coinAmount,
+    required this.freeFireUID,
+    required this.package,
+    required this.coinCost,
     required this.packageValue,
     required this.status,
-    this.redeemCode,
-    this.adminNotes,
-    required this.createdAt,
-    this.updatedAt,
+    this.assignedRedeemCode,
+    this.adminRemark,
+    required this.requestedAt,
+    this.approvedAt,
+    this.completedAt,
   });
 
   factory WithdrawalModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return WithdrawalModel(
-      id: doc.id,
+      withdrawalId: doc.id,
       userId: data['userId'] ?? '',
-      ffUid: data['ffUid'] ?? '',
-      packageName: data['packageName'] ?? '',
-      coinAmount: (data['coinAmount'] ?? 0).toInt(),
+      freeFireUID: data['freeFireUID'] ?? data['ffUid'] ?? '',
+      package: data['package'] ?? data['packageName'] ?? '',
+      coinCost: (data['coinCost'] ?? data['coinAmount'] ?? 0).toInt(),
       packageValue: data['packageValue'] ?? '',
-      status: WithdrawalStatus.values.firstWhere(
-        (s) => s.name == data['status'],
-        orElse: () => WithdrawalStatus.pending,
-      ),
-      redeemCode: data['redeemCode'],
-      adminNotes: data['adminNotes'],
-      createdAt: data['createdAt'] != null
-          ? (data['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
-      updatedAt: data['updatedAt'] != null
-          ? (data['updatedAt'] as Timestamp).toDate()
-          : null,
+      status: WithdrawalStatusExt.fromString(data['status']),
+      assignedRedeemCode:
+          data['assignedRedeemCode'] ?? data['redeemCode'],
+      adminRemark: data['adminRemark'] ?? data['adminNotes'],
+      requestedAt: _toDateTime(data['requestedAt'] ?? data['createdAt']) ??
+          DateTime.now(),
+      approvedAt: _toDateTime(data['approvedAt']),
+      completedAt: _toDateTime(data['completedAt'] ?? data['updatedAt']),
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
-      'ffUid': ffUid,
-      'packageName': packageName,
-      'coinAmount': coinAmount,
+      'freeFireUID': freeFireUID,
+      'package': package,
+      'coinCost': coinCost,
       'packageValue': packageValue,
       'status': status.name,
-      'redeemCode': redeemCode,
-      'adminNotes': adminNotes,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': updatedAt != null
-          ? Timestamp.fromDate(updatedAt!)
-          : null,
+      'assignedRedeemCode': assignedRedeemCode,
+      'adminRemark': adminRemark,
+      'requestedAt': FieldValue.serverTimestamp(),
+      'approvedAt':
+          approvedAt != null ? Timestamp.fromDate(approvedAt!) : null,
+      'completedAt':
+          completedAt != null ? Timestamp.fromDate(completedAt!) : null,
     };
   }
 
   WithdrawalModel copyWith({
     WithdrawalStatus? status,
-    String? redeemCode,
-    String? adminNotes,
-    DateTime? updatedAt,
+    String? assignedRedeemCode,
+    String? adminRemark,
+    DateTime? approvedAt,
+    DateTime? completedAt,
   }) {
     return WithdrawalModel(
-      id: id,
+      withdrawalId: withdrawalId,
       userId: userId,
-      ffUid: ffUid,
-      packageName: packageName,
-      coinAmount: coinAmount,
+      freeFireUID: freeFireUID,
+      package: package,
+      coinCost: coinCost,
       packageValue: packageValue,
       status: status ?? this.status,
-      redeemCode: redeemCode ?? this.redeemCode,
-      adminNotes: adminNotes ?? this.adminNotes,
-      createdAt: createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      assignedRedeemCode: assignedRedeemCode ?? this.assignedRedeemCode,
+      adminRemark: adminRemark ?? this.adminRemark,
+      requestedAt: requestedAt,
+      approvedAt: approvedAt ?? this.approvedAt,
+      completedAt: completedAt ?? this.completedAt,
     );
+  }
+
+  static DateTime? _toDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
   }
 }

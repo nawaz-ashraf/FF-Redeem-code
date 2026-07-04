@@ -1,4 +1,5 @@
 // lib/core/constants/app_constants.dart
+import 'dart:io';
 
 class AppConstants {
   AppConstants._();
@@ -35,6 +36,7 @@ class AppConstants {
   static const String settingsCollection = 'settings';
   static const String bannedUsersCollection = 'bannedUsers';
   static const String adminLogsCollection = 'adminLogs';
+  static const String appStatisticsCollection = 'appStatistics';
 
   // Hive boxes
   static const String userBox = 'user_box';
@@ -54,12 +56,33 @@ class AppConstants {
   static const String dailySpinCountKey = 'daily_spin_count';
   static const String dailyStreakKey = 'daily_streak';
   static const String lastAdRewardDateKey = 'last_ad_reward_date';
+  static const String notificationsEnabledKey = 'notifications_enabled';
+  static const String darkModeKey = 'dark_mode';
 
-  // AdMob IDs (test IDs - replace with real ones)
-  static const String admobRewardedAdId =
-      'ca-app-pub-3940256099942544/5224354917'; // Test ID
-  static const String admobBannerAdId =
-      'ca-app-pub-3940256099942544/6300978111'; // Test ID
+  // AdMob IDs (test IDs — replace with real ones before release)
+  static String get admobRewardedAdId {
+    if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/5224354917';
+    if (Platform.isIOS) return 'ca-app-pub-3940256099942544/1712485313';
+    return '';
+  }
+
+  static String get admobBannerAdId {
+    if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/6300978111';
+    if (Platform.isIOS) return 'ca-app-pub-3940256099942544/2934735716';
+    return '';
+  }
+
+  static String get admobInterstitialAdId {
+    if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/1033173712';
+    if (Platform.isIOS) return 'ca-app-pub-3940256099942544/4411468910';
+    return '';
+  }
+
+  // Notification channels
+  static const String notificationChannelId = 'ff_redeem_channel';
+  static const String notificationChannelName = 'FF Redeem Notifications';
+  static const String notificationChannelDescription =
+      'Notifications for rewards, redeem status, and announcements';
 
   // Scratch rewards
   static const List<int> scratchRewards = [2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -88,4 +111,12 @@ class AppConstants {
     {'level': 6, 'name': 'Grandmaster', 'minXP': 1500, 'maxXP': 2500},
     {'level': 7, 'name': 'Legend', 'minXP': 2500, 'maxXP': 999999},
   ];
+
+  // Interstitial ad rules
+  static const int interstitialScreenInterval = 5;
+
+  // Support
+  static const String supportEmail = 'support@ffredeemcode.app';
+  static const String privacyPolicyUrl = 'https://ffredeemcode.app/privacy';
+  static const String termsUrl = 'https://ffredeemcode.app/terms';
 }

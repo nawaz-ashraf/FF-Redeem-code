@@ -14,6 +14,8 @@ import '../../widgets/common/coin_balance_widget.dart';
 import '../../widgets/home/reward_card.dart';
 import '../../widgets/home/streak_widget.dart';
 import '../../widgets/home/notice_banner.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../../core/services/ad_service.dart';
 import '../../widgets/home/daily_login_dialog.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -26,6 +28,8 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage>
     with TickerProviderStateMixin {
   late AnimationController _coinPulseController;
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
 
   @override
   void initState() {
@@ -38,19 +42,40 @@ class _HomePageState extends ConsumerState<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDailyLogin();
     });
+
+    _loadBannerAd();
+  }
+
+  void _loadBannerAd() {
+    _bannerAd = AdService.createBannerAd(
+      onLoaded: () {
+        if (mounted) {
+          setState(() {
+            _isBannerLoaded = true;
+          });
+        }
+      },
+      onFailed: () {
+        if (mounted) {
+          setState(() {
+            _isBannerLoaded = false;
+          });
+        }
+      },
+    );
   }
 
   Future<void> _checkDailyLogin() async {
     final user = ref.read(currentUserProvider).value;
     if (user == null) return;
 
-    final limits = await ref.read(rewardRepositoryProvider).getDailyLimits(user.id);
+    final limits = await ref.read(rewardRepositoryProvider).getDailyLimits(user.uid);
     if (limits['loginClaimed'] == 0) {
       if (mounted) {
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (_) => DailyLoginDialog(userId: user.id),
+          builder: (_) => DailyLoginDialog(userId: user.uid),
         );
       }
     }
@@ -59,6 +84,7 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void dispose() {
     _coinPulseController.dispose();
+    AdService.disposeBannerAd();
     super.dispose();
   }
 
@@ -75,6 +101,14 @@ class _HomePageState extends ConsumerState<HomePage>
           return _buildHomeContent(user);
         },
       ),
+      bottomNavigationBar: _isBannerLoaded && _bannerAd != null
+          ? Container(
+              alignment: Alignment.center,
+              width: _bannerAd!.size.width.toDouble(),
+              height: _bannerAd!.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : null,
     );
   }
 
@@ -132,7 +166,7 @@ class _HomePageState extends ConsumerState<HomePage>
                           ),
                         ),
                         Text(
-                          '${levelInfo['name']} • ${user.ffUid}',
+                          '${levelInfo['name']} • ${user.freeFireUID}',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -369,9 +403,9 @@ class _HomePageState extends ConsumerState<HomePage>
             children: [
               _buildStatChip('💎', '${user.referralCount}', 'Referrals'),
               const SizedBox(width: 12),
-              _buildStatChip('📊', user.totalEarned.toString(), 'Total Earned'),
-              const SizedBox(width: 12),
-              _buildStatChip('✅', user.totalRedeemed.toString(), 'Redeemed'),
+              _buildStatChip('📊', user.totalEarnedCoins.toString(), 'Total Earned'),
+              const SizedBox(width: 8),
+              _buildStatChip('✅', user.totalRedeemedCoins.toString(), 'Redeemed'),
             ],
           ),
         ],
@@ -428,7 +462,7 @@ class _HomePageState extends ConsumerState<HomePage>
         emoji: '📺',
         gradient: AppColors.blueGradient,
         badge: '30/day',
-        onTap: () => context.push('/home'), // Will trigger ad
+        onTap: () => context.push('/watch-ads'), // Will trigger ad
       ),
       RewardCardData(
         title: 'Scratch Card',
@@ -486,7 +520,7 @@ class _HomePageState extends ConsumerState<HomePage>
   Widget _buildTodayProgress() {
     return FutureBuilder<Map<String, int>>(
       future: ref.read(rewardRepositoryProvider).getDailyLimits(
-            ref.read(currentUserProvider).value?.id ?? '',
+            ref.read(currentUserProvider).value?.uid ?? '',
           ),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox();
@@ -577,7 +611,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (user == null) return;
     showDialog(
       context: context,
-      builder: (_) => DailyLoginDialog(userId: user.id),
+      builder: (_) => DailyLoginDialog(userId: user.uid),
     );
   }
 }

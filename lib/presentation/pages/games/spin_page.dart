@@ -145,7 +145,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
                   // Remaining spins
                   FutureBuilder<Map<String, int>>(
                     future: ref.read(rewardRepositoryProvider).getDailyLimits(
-                          ref.read(currentUserProvider).value?.id ?? '',
+                          ref.read(currentUserProvider).value?.uid ?? '',
                         ),
                     builder: (context, snap) {
                       final remaining = snap.data?['spinRemaining'] ??

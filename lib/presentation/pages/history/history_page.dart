@@ -7,7 +7,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../../data/models/transaction_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/reward_provider.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
@@ -23,12 +22,12 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
   final List<TransactionType?> _filters = [
     null, // All
-    TransactionType.adReward,
+    TransactionType.rewardedAd,
     TransactionType.dailyLogin,
     TransactionType.scratch,
     TransactionType.spin,
     TransactionType.referral,
-    TransactionType.redeem,
+    TransactionType.redeemRequest,
   ];
 
   @override
@@ -40,30 +39,20 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
-    final userId = userAsync.value?.id;
+    final userId = userAsync.value?.uid;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Transaction History'),
+        backgroundColor: AppColors.surface,
+      ),
       body: Container(
         decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Row(
-                  children: [
-                    Text(
-                      'Transaction History',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 16),
               // Search
               Padding(
@@ -324,7 +313,7 @@ class _TransactionItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isCredit ? '+' : '-'}${transaction.coins}',
+                '${isCredit ? '+' : '-'}${transaction.rewardAmount}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,

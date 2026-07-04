@@ -44,7 +44,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getReadableErrorMessage(e)),
+            content: Text(e.toString()),
             backgroundColor: AppColors.error,
           ),
         );

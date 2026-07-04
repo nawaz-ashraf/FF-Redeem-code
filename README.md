@@ -1,166 +1,67 @@
-# FF Redeem Code - Setup Guide
+# FF Redeem Code
 
-## Prerequisites
-- Flutter SDK (installed)
-- Firebase account
-- Google AdMob account
-- Android Studio / VS Code
+A complete Flutter application for earning coins through games, ads, and referrals, and redeeming them for Free Fire diamonds or Google Play redeem codes.
 
-## 1. Firebase Setup
+## Features
 
-### Create Firebase Project
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project named **"FF Redeem Code"**
-3. Enable Analytics
+- **Authentication**: Device ID-based registration ensuring one account per device.
+- **Earn Coins**:
+  - Daily Login Rewards
+  - Scratch Cards
+  - Spin the Wheel
+  - Watch Video Ads
+  - Referral System
+- **Redeem**: Exchange earned coins for game currencies or gift cards.
+- **Admin Panel**: Manage users, approve/reject withdrawals, manage redeem codes, and broadcast push notifications.
+- **Architecture**: Built using Clean Architecture and SOLID principles.
+- **State Management**: Riverpod for predictable and scalable state.
 
-### Enable Services
-In Firebase Console, enable:
-- **Authentication** → Email/Password sign-in
-- **Cloud Firestore** → Start in production mode
-- **Firebase Storage** → For profile pictures
-- **Cloud Messaging** → For push notifications
-- **Analytics** → Already enabled
-- **Crashlytics** → Enable crash reporting
-- **Remote Config** → For dynamic settings
-- **App Check** → Enable with Play Integrity (Android) / DeviceCheck (iOS)
+## Folder Structure (Layer-Based)
 
-### Connect Flutter App
-```bash
-# Install FlutterFire CLI
-dart pub global activate flutterfire_cli
-
-# Configure Firebase (generates firebase_options.dart)
-flutterfire configure
-
-# Select your Firebase project when prompted
-```
-
-> This automatically generates `lib/firebase_options.dart` with correct credentials.
-
-## 2. Firestore Setup
-
-### Deploy Security Rules
-```bash
-# Install Firebase CLI
-npm install -g firebase-tools
-
-# Login
-firebase login
-
-# Initialize (select Firestore)
-firebase init firestore
-
-# Deploy rules
-firebase deploy --only firestore:rules
-```
-
-### Create Initial Collections
-In Firestore Console, create:
-- `users` (empty - auto-created on register)
-- `settings/announcements` → Add field `active: false`
-- `redeemCodes` (empty - admin adds codes)
-
-### Create Admin User
-After registering normally, go to Firestore → `users` → find your user document → Set `isAdmin: true`
-
-## 3. AdMob Setup
-
-1. Go to [AdMob Console](https://admob.google.com/)
-2. Create app for Android and iOS
-3. Create Rewarded Ad unit
-4. Replace test IDs in `lib/core/constants/app_constants.dart`:
-   ```dart
-   static const String admobRewardedAdId = 'ca-app-pub-XXXXX/XXXXX';
-   ```
-5. Update `AndroidManifest.xml`:
-   ```xml
-   <meta-data
-       android:name="com.google.android.gms.ads.APPLICATION_ID"
-       android:value="ca-app-pub-YOUR_REAL_APP_ID"/>
-   ```
-
-## 4. Run the App
-
-```bash
-# Install dependencies
-flutter pub get
-
-# Run on device/emulator
-flutter run
-
-# Build APK
-flutter build apk --release
-
-# Build App Bundle
-flutter build appbundle --release
-```
-
-## 5. Firebase Cloud Messaging (FCM)
-
-### Android
-The FCM service is already configured in `AndroidManifest.xml`.
-
-### iOS
-1. Upload APNs key in Firebase Console
-2. Add `GoogleService-Info.plist` to `ios/Runner/`
-
-## 6. Firestore Indexes
-
-Create composite indexes in Firebase Console:
-- `transactions`: `userId` ASC, `createdAt` DESC
-- `withdrawals`: `userId` ASC, `createdAt` DESC  
-- `withdrawals`: `status` ASC, `createdAt` DESC
-- `adRewards`: `userId` ASC, `createdAt` DESC
-
-## Architecture Overview
-
-```
+```text
 lib/
 ├── core/
-│   ├── constants/      # App-wide constants
+│   ├── animations/     # Reusable animation widgets
+│   ├── constants/      # App config and constants
 │   ├── errors/         # Custom exceptions
-│   ├── services/       # Firebase, Router, AdMob
-│   ├── theme/          # Dark gaming theme
-│   └── utils/          # Helper functions
+│   ├── extensions/     # Dart extensions for Date, String, BuildContext
+│   ├── routes/         # GoRouter configuration
+│   ├── services/       # Firebase, Ads, Network, Notifications
+│   ├── theme/          # App colors and themes
+│   └── utils/          # Helpers and formatters
 ├── data/
-│   ├── models/         # Firestore models
-│   └── repositories/   # Data access layer
-└── presentation/
-    ├── pages/          # All screens
-    ├── providers/      # Riverpod state management
-    └── widgets/        # Reusable UI components
+│   ├── models/         # Firestore data models
+│   └── repositories/   # Firebase interaction layer
+├── presentation/
+│   ├── pages/          # UI Screens (auth, home, admin, games, settings)
+│   ├── providers/      # Riverpod state notifiers
+│   └── widgets/        # Reusable UI components
+└── main.dart
 ```
 
-## Key Features
+## Setup Instructions
 
-| Feature | Implementation |
-|---------|---------------|
-| Auth | Firebase Auth (Email/Password) |
-| Data | Cloud Firestore (real-time) |
-| State | Riverpod |
-| Navigation | GoRouter with auth guard |
-| Ads | Google Mobile Ads (Rewarded) |
-| Notifications | Firebase Cloud Messaging |
-| Storage | Firebase Storage |
-| Analytics | Firebase Analytics |
-| Crash Reporting | Firebase Crashlytics |
+1. **Firebase Configuration**:
+   - The app uses `firebase_options.dart` generated via FlutterFire CLI.
+   - Configure Firebase Authentication (Anonymous or Email/Password if enabled later).
+   - Set up Firestore Database using the provided `firestore.rules`.
+   - Set up Firebase Cloud Messaging for Push Notifications.
+   - Enable Firebase App Check for security (Play Integrity).
 
-## Security
+2. **AdMob Configuration**:
+   - Update the `APPLICATION_ID` in `android/app/src/main/AndroidManifest.xml` with your real AdMob App ID for production.
+   - Update the Ad Unit IDs in `lib/core/constants/app_constants.dart`.
 
-- One FF UID per account
-- One device per account
-- Firestore rules enforce ownership
-- Firebase App Check prevents abuse
-- Admin-only withdrawal approval
-- Ban detection and enforcement
+3. **Running the App**:
+   ```bash
+   flutter pub get
+   flutter run
+   ```
 
-## Legal Compliance
+## Admin Access
+To make a user an admin, manually update their document in the `users` Firestore collection: set the `isAdmin` field to `true`.
 
-- App never promises "unlimited diamonds"
-- All reward screens show "subject to availability"
-- Privacy Policy and Terms of Service links
-- User data deletion option in profile
-
----
-
-> Built with ❤️ for FF players
+## Security & Rules
+- All coin operations use `firestore.runTransaction` for concurrency safety.
+- Daily limits are enforced locally and verified server-side.
+- The `firestore.rules` file contains strict permissions to prevent unauthorized writes or coin manipulation.

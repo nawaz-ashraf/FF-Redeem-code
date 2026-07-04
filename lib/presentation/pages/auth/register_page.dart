@@ -61,7 +61,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             name: _nameCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
             password: _passwordCtrl.text,
-            ffUid: _ffUidCtrl.text.trim(),
+            freeFireUID: _ffUidCtrl.text.trim(),
             referralCode: _referralCtrl.text.trim().isEmpty
                 ? null
                 : _referralCtrl.text.trim().toUpperCase(),
@@ -71,7 +71,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(getReadableErrorMessage(e)),
+            content: Text(e.toString()),
             backgroundColor: AppColors.error,
           ),
         );

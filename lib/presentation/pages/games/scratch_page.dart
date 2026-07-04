@@ -125,7 +125,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                   // Remaining count
                   FutureBuilder<Map<String, int>>(
                     future: ref.read(rewardRepositoryProvider).getDailyLimits(
-                          ref.read(currentUserProvider).value?.id ?? '',
+                          ref.read(currentUserProvider).value?.uid ?? '',
                         ),
                     builder: (context, snap) {
                       final remaining = snap.data?['scratchRemaining'] ?? AppConstants.maxDailyScratch;

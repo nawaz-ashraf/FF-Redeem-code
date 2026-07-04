@@ -1,16 +1,17 @@
 // lib/presentation/pages/admin/admin_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/firebase_service.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../data/models/withdrawal_model.dart';
 import '../../../data/models/user_model.dart';
-import '../../../data/repositories/withdrawal_repository.dart';
+import '../../../data/models/notification_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/admin_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../providers/reward_provider.dart';
+import '../../../data/repositories/withdrawal_repository.dart';
 
 class AdminDashboard extends ConsumerStatefulWidget {
   const AdminDashboard({super.key});
@@ -66,6 +67,13 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         backgroundColor: AppColors.surface,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.confirmation_number_outlined),
+            tooltip: 'Redeem Codes',
+            onPressed: () => context.push('/admin/redeem-codes'),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.primary,
@@ -97,22 +105,28 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Dashboard Overview',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Dashboard Overview',
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () => ref.invalidate(dashboardStatsProvider),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           // Stats grid
-          FutureBuilder<Map<String, dynamic>>(
-            future: _fetchStats(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final stats = snapshot.data!;
+          ref.watch(dashboardStatsProvider).when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+            data: (stats) {
               return GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
@@ -121,22 +135,40 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.4,
                 children: [
-                  _buildStatCard('👥 Total Users',
-                      stats['totalUsers'].toString(), AppColors.accent2),
-                  _buildStatCard('⏳ Pending',
-                      stats['pendingWithdrawals'].toString(),
-                      AppColors.warning),
-                  _buildStatCard('✅ Approved',
-                      stats['approvedWithdrawals'].toString(),
-                      AppColors.success),
-                  _buildStatCard('❌ Rejected',
-                      stats['rejectedWithdrawals'].toString(), AppColors.error),
-                  _buildStatCard('🪙 Codes Available',
-                      stats['availableCodes'].toString(), AppColors.gold),
-                  _buildStatCard('📺 Today\'s Ads',
-                      stats['todayAds'].toString(), AppColors.primary),
+                  _buildStatCard(
+                    '👥 Total Users',
+                    stats['totalUsers'].toString(),
+                    AppColors.accent2,
+                    subtitle: '+${stats['todayUsers']} today',
+                  ),
+                  _buildStatCard(
+                    '⏳ Pending',
+                    stats['pendingWithdrawals'].toString(),
+                    AppColors.warning,
+                  ),
+                  _buildStatCard(
+                    '✅ Approved',
+                    stats['approvedWithdrawals'].toString(),
+                    AppColors.success,
+                    subtitle: 'Conv: ${stats['conversionRate']}%',
+                  ),
+                  _buildStatCard(
+                    '❌ Rejected',
+                    stats['rejectedWithdrawals'].toString(),
+                    AppColors.error,
+                  ),
+                  _buildStatCard(
+                    '🎫 Codes Available',
+                    stats['availableCodes'].toString(),
+                    AppColors.gold,
+                  ),
+                  _buildStatCard(
+                    '📺 Today\'s Ads',
+                    stats['todayAds'].toString(),
+                    AppColors.primary,
+                  ),
                 ],
-              );
+              ).animate().fade().scaleXY(begin: 0.9, duration: 400.ms);
             },
           ),
         ],
@@ -144,54 +176,8 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
     );
   }
 
-  Future<Map<String, dynamic>> _fetchStats() async {
-    final fs = FirebaseService.firestore;
-    final today = DateTime.now();
-    final todayStart =
-        DateTime(today.year, today.month, today.day);
-
-    final results = await Future.wait([
-      fs.collection(AppConstants.usersCollection).count().get(),
-      fs
-          .collection(AppConstants.withdrawalsCollection)
-          .where('status', isEqualTo: 'pending')
-          .count()
-          .get(),
-      fs
-          .collection(AppConstants.withdrawalsCollection)
-          .where('status', isEqualTo: 'approved')
-          .count()
-          .get(),
-      fs
-          .collection(AppConstants.withdrawalsCollection)
-          .where('status', isEqualTo: 'rejected')
-          .count()
-          .get(),
-      fs
-          .collection(AppConstants.redeemCodesCollection)
-          .where('status', isEqualTo: 'available')
-          .count()
-          .get(),
-      fs
-          .collection(AppConstants.adRewardsCollection)
-          .where('createdAt',
-              isGreaterThanOrEqualTo:
-                  Timestamp.fromDate(todayStart))
-          .count()
-          .get(),
-    ]);
-
-    return {
-      'totalUsers': results[0].count,
-      'pendingWithdrawals': results[1].count,
-      'approvedWithdrawals': results[2].count,
-      'rejectedWithdrawals': results[3].count,
-      'availableCodes': results[4].count,
-      'todayAds': results[5].count,
-    };
-  }
-
-  Widget _buildStatCard(String label, String value, Color color) {
+  Widget _buildStatCard(String label, String value, Color color,
+      {String? subtitle}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -217,8 +203,20 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
             style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 10,
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -241,15 +239,15 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
 
               return Expanded(
                 child: GestureDetector(
-                  onTap: () =>
-                      setState(() => _withdrawalFilter = status),
+                  onTap: () => setState(() => _withdrawalFilter = status),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color:
-                          isSelected ? color.withOpacity(0.2) : AppColors.surface,
+                      color: isSelected
+                          ? color.withOpacity(0.2)
+                          : AppColors.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected ? color : AppColors.border,
@@ -273,17 +271,14 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
         ),
         // List
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseService.firestore
-                .collection(AppConstants.withdrawalsCollection)
-                .where('status', isEqualTo: _withdrawalFilter)
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
+          child: StreamBuilder<List<WithdrawalModel>>(
+            stream: WithdrawalRepository()
+                .watchAllWithdrawals(status: _withdrawalFilter),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
-              final docs = snapshot.data!.docs;
+              final docs = snapshot.data!;
               if (docs.isEmpty) {
                 return Center(
                   child: Text('No $_withdrawalFilter requests'),
@@ -293,8 +288,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: docs.length,
                 itemBuilder: (context, i) {
-                  final w = WithdrawalModel.fromFirestore(docs[i]);
-                  return _AdminWithdrawalCard(withdrawal: w);
+                  return _AdminWithdrawalCard(withdrawal: docs[i]);
                 },
               );
             },
@@ -305,220 +299,206 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
   }
 
   Widget _buildUsersTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseService.firestore
-          .collection(AppConstants.usersCollection)
-          .orderBy('registrationDate', descending: true)
-          .limit(50)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final docs = snapshot.data!.docs;
-        return ListView.builder(
+    return Column(
+      children: [
+        Padding(
           padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
-          itemBuilder: (context, i) {
-            final user = UserModel.fromFirestore(docs[i]);
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: user.status == 'banned'
-                      ? AppColors.error.withOpacity(0.3)
-                      : AppColors.border,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: user.status == 'banned'
-                          ? const LinearGradient(
-                              colors: [AppColors.error, Color(0xFFB71C1C)])
-                          : AppColors.primaryGradient,
-                    ),
-                    child: Center(
-                      child: Text(
-                        user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
+          child: TextField(
+            decoration: const InputDecoration(
+              hintText: 'Search by name or FF UID...',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onSubmitted: (val) {
+              // Trigger search via provider if needed, or navigate to full list
+            },
+          ),
+        ),
+        Expanded(
+          child: FutureBuilder<List<UserModel>>(
+            future: ref.read(adminRepositoryProvider).getUsers(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final users = snapshot.data!;
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: users.length,
+                itemBuilder: (context, i) {
+                  final user = users[i];
+                  return InkWell(
+                    onTap: () => context.push('/admin/user/${user.uid}'),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: user.isBanned
+                              ? AppColors.error.withOpacity(0.3)
+                              : AppColors.border,
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user.name,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        Text(
-                          'UID: ${user.ffUid} • ${user.coins} coins',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: user.isBanned
+                                  ? const LinearGradient(colors: [
+                                      AppColors.error,
+                                      Color(0xFFB71C1C)
+                                    ])
+                                  : AppColors.primaryGradient,
+                            ),
+                            child: Center(
+                              child: Text(
+                                user.name.isNotEmpty
+                                    ? user.name[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  'UID: ${user.freeFireUID} • ${user.coins} coins',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textHint),
+                        ],
+                      ),
                     ),
-                  ),
-                  PopupMenuButton<String>(
-                    color: AppColors.surfaceLight,
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(
-                          value: 'ban', child: Text('Ban User')),
-                      const PopupMenuItem(
-                          value: 'unban', child: Text('Unban User')),
-                      const PopupMenuItem(
-                          value: 'adjust', child: Text('Adjust Coins')),
-                    ],
-                    onSelected: (action) =>
-                        _handleUserAction(action, user),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildNotificationsTab() {
     final titleCtrl = TextEditingController();
     final bodyCtrl = TextEditingController();
+    NotificationType _selectedType = NotificationType.announcement;
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Send Push Notification',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: titleCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Notification Title',
-              prefixIcon: Icon(Icons.title),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: bodyCtrl,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'Message Body',
-              prefixIcon: Icon(Icons.message),
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.send),
-              label: const Text('Send to All Users'),
-              onPressed: () async {
-                // Save notification to Firestore for FCM to pick up
-                await FirebaseService.firestore
-                    .collection(AppConstants.notificationsCollection)
-                    .add({
-                  'title': titleCtrl.text,
-                  'body': bodyCtrl.text,
-                  'type': 'broadcast',
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'sentBy': FirebaseService.currentUserId,
-                });
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Notification queued for sending ✅'),
-                      backgroundColor: AppColors.success,
-                    ),
+    return StatefulBuilder(builder: (context, setState) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Send Push Notification',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Notification Title',
+                  prefixIcon: Icon(Icons.title),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: bodyCtrl,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Message Body',
+                  prefixIcon: Icon(Icons.message),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<NotificationType>(
+                value: _selectedType,
+                decoration: const InputDecoration(
+                  labelText: 'Notification Type',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: NotificationType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text('${type.icon} ${type.label}'),
                   );
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedType = val);
+                },
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.send),
+                  label: const Text('Send to All Users'),
+                  onPressed: () async {
+                    if (titleCtrl.text.isEmpty || bodyCtrl.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please fill all fields')),
+                      );
+                      return;
+                    }
 
-  Future<void> _handleUserAction(String action, UserModel user) async {
-    switch (action) {
-      case 'ban':
-        await FirebaseService.firestore
-            .collection(AppConstants.usersCollection)
-            .doc(user.id)
-            .update({'status': 'banned'});
-        break;
-      case 'unban':
-        await FirebaseService.firestore
-            .collection(AppConstants.usersCollection)
-            .doc(user.id)
-            .update({'status': 'active'});
-        break;
-      case 'adjust':
-        _showAdjustCoinsDialog(user);
-        break;
-    }
-  }
+                    await ref
+                        .read(notificationRepositoryProvider)
+                        .sendBroadcast(
+                          title: titleCtrl.text.trim(),
+                          message: bodyCtrl.text.trim(),
+                          type: _selectedType,
+                        );
 
-  void _showAdjustCoinsDialog(UserModel user) {
-    final ctrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text('Adjust Coins for ${user.name}'),
-        content: TextField(
-          controller: ctrl,
-          keyboardType: const TextInputType.numberWithOptions(signed: true),
-          decoration: const InputDecoration(
-            labelText: 'Amount (+/-)',
-            hintText: 'e.g. +100 or -50',
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Notification sent successfully ✅'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                      titleCtrl.clear();
+                      bodyCtrl.clear();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final amount = int.tryParse(ctrl.text) ?? 0;
-              await FirebaseService.firestore
-                  .collection(AppConstants.usersCollection)
-                  .doc(user.id)
-                  .update({
-                'coins': FieldValue.increment(amount),
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Apply'),
-          ),
-        ],
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -547,7 +527,7 @@ class _AdminWithdrawalCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      withdrawal.packageName,
+                      '${withdrawal.package} - ${withdrawal.packageValue}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
@@ -555,7 +535,7 @@ class _AdminWithdrawalCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'FF UID: ${withdrawal.ffUid}',
+                      'FF UID: ${withdrawal.freeFireUID}',
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 13,
@@ -563,7 +543,7 @@ class _AdminWithdrawalCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      '${withdrawal.coinAmount} coins • ${withdrawal.createdAt.toLocal().toString().substring(0, 10)}',
+                      '${withdrawal.coinCost} coins • ${withdrawal.requestedAt.toLocal().toString().substring(0, 10)}',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -606,6 +586,37 @@ class _AdminWithdrawalCard extends ConsumerWidget {
               ],
             ),
           ],
+          if (withdrawal.status == WithdrawalStatus.approved) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.vpn_key, size: 16, color: AppColors.success),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Code: ${withdrawal.assignedRedeemCode ?? "N/A"}',
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+          if (withdrawal.status == WithdrawalStatus.rejected && withdrawal.adminRemark != null) ...[
+             const SizedBox(height: 8),
+             Text(
+               'Reason: ${withdrawal.adminRemark}',
+               style: const TextStyle(color: AppColors.error, fontSize: 12),
+             ),
+          ]
         ],
       ),
     );
@@ -624,6 +635,12 @@ class _AdminWithdrawalCard extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            FutureBuilder(
+              future: ref.read(redeemCodeRepositoryProvider).getAvailableCodeForPackage(w.package),
+              builder: (context, snapshot) {
+                 return const SizedBox.shrink(); // Using AdminRepository for manual code entry currently
+              },
+            ),
             TextField(
               controller: codeCtrl,
               decoration: const InputDecoration(
@@ -648,14 +665,20 @@ class _AdminWithdrawalCard extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               if (codeCtrl.text.isEmpty) return;
-              await ref.read(withdrawalRepositoryProvider).approveWithdrawal(
-                    withdrawalId: w.id,
-                    redeemCode: codeCtrl.text.trim(),
-                    adminNotes: notesCtrl.text.isEmpty
-                        ? null
-                        : notesCtrl.text,
-                  );
-              if (context.mounted) Navigator.pop(context);
+              try {
+                await ref.read(withdrawalRepositoryProvider).approveWithdrawal(
+                      withdrawalId: w.withdrawalId,
+                      redeemCode: codeCtrl.text.trim(),
+                      adminRemark: notesCtrl.text.isEmpty
+                          ? null
+                          : notesCtrl.text,
+                    );
+                if (context.mounted) Navigator.pop(context);
+              } catch (e) {
+                 if (context.mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                 }
+              }
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success),
@@ -689,8 +712,8 @@ class _AdminWithdrawalCard extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               await ref.read(withdrawalRepositoryProvider).rejectWithdrawal(
-                    withdrawalId: w.id,
-                    adminNotes: notesCtrl.text.isEmpty
+                    withdrawalId: w.withdrawalId,
+                    adminRemark: notesCtrl.text.isEmpty
                         ? null
                         : notesCtrl.text,
                   );

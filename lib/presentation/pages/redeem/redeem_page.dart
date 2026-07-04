@@ -127,8 +127,8 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                             onRedeem: () => _showConfirmDialog(
                               context,
                               _packages[i],
-                              userAsync.value?.id ?? '',
-                              userAsync.value?.ffUid ?? '',
+                              userAsync.value?.uid ?? '',
+                              userAsync.value?.freeFireUID ?? '',
                             ),
                           )
                               .animate(delay: (i * 100).ms)
@@ -311,9 +311,9 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
       final repo = ref.read(withdrawalRepositoryProvider);
       await repo.submitWithdrawal(
         userId: userId,
-        ffUid: ffUid,
-        packageName: package.name,
-        coinAmount: package.coins,
+        freeFireUID: ffUid,
+        package: package.name,
+        coinCost: package.coins,
         packageValue: package.value,
       );
 
@@ -512,7 +512,7 @@ class _WithdrawalCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  withdrawal.packageName,
+                  withdrawal.package,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -541,18 +541,18 @@ class _WithdrawalCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                '${withdrawal.coinAmount} coins',
+                '${withdrawal.coinCost} coins',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
               const Spacer(),
               Text(
-                withdrawal.createdAt.toLocal().toString().substring(0, 10),
+                withdrawal.requestedAt.toLocal().toString().substring(0, 10),
                 style: TextStyle(color: AppColors.textHint, fontSize: 12),
               ),
             ],
           ),
           if (withdrawal.status == WithdrawalStatus.approved &&
-              withdrawal.redeemCode != null) ...[
+              withdrawal.assignedRedeemCode != null) ...[
             const SizedBox(height: 12),
             const Divider(color: AppColors.divider),
             const SizedBox(height: 8),
@@ -575,7 +575,7 @@ class _WithdrawalCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      withdrawal.redeemCode!,
+                      withdrawal.assignedRedeemCode!,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -598,11 +598,11 @@ class _WithdrawalCard extends StatelessWidget {
               ],
             ),
           ],
-          if (withdrawal.adminNotes != null &&
-              withdrawal.adminNotes!.isNotEmpty) ...[
+          if (withdrawal.adminRemark != null &&
+              withdrawal.adminRemark!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              '📝 ${withdrawal.adminNotes}',
+              '📝 ${withdrawal.adminRemark}',
               style: TextStyle(
                 color: AppColors.textHint,
                 fontSize: 12,
