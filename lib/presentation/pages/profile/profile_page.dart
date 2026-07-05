@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../providers/auth_provider.dart';
@@ -302,61 +303,136 @@ class ProfilePage extends ConsumerWidget {
                 child: Column(
                   children: [
                     if (user.isAdmin)
-                      _buildMenuItem(
-                        context,
+                      _AnimatedMenuItem(
                         icon: Icons.admin_panel_settings,
                         label: 'Admin Dashboard',
                         color: AppColors.error,
                         onTap: () => context.push('/admin'),
                       ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.history,
                       label: 'Transaction History',
                       onTap: () => context.go('/history'),
                     ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.privacy_tip_outlined,
                       label: 'Privacy Policy',
-                      onTap: () {},
+                      onTap: () => context.push('/privacy-policy'),
                     ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.description_outlined,
                       label: 'Terms of Service',
-                      onTap: () {},
+                      onTap: () => context.push('/terms-of-service'),
                     ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.support_agent_outlined,
                       label: 'Contact Support',
-                      onTap: () {},
+                      onTap: () async {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppColors.surface,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            title: const Text('Contact Support', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                            content: const Text('Choose how you would like to contact us:', style: TextStyle(color: AppColors.textSecondary)),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Clipboard.setData(const ClipboardData(text: 'Gameredeemcode00@gmail.com'));
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Email copied to clipboard! ✅'), backgroundColor: AppColors.success),
+                                  );
+                                },
+                                child: const Text('Copy Email', style: TextStyle(color: Colors.grey)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final Uri emailLaunchUri = Uri(
+                                    scheme: 'mailto',
+                                    path: 'Gameredeemcode00@gmail.com',
+                                    queryParameters: {
+                                      'subject': 'Game Redeem Code Support',
+                                      'body': 'Hello, I need help regarding:\\n\\nDevice:\\nAndroid Version:\\nApp Version:\\nProblem:\\n\\nThank you.',
+                                    },
+                                  );
+                                  if (!await launchUrl(emailLaunchUri)) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('No email application found.'), backgroundColor: AppColors.error),
+                                      );
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text('Email Support', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.star_outline,
                       label: 'Rate App',
-                      onTap: () {},
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: AppColors.surface,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            title: const Text('Rate App', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                            content: const Text('Thank you for using FF Redeem Code. Please rate us on Google Play.', style: TextStyle(color: AppColors.textSecondary)),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Never', style: TextStyle(color: Colors.grey)),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Later', style: TextStyle(color: AppColors.primary)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final url = Uri.parse('market://details?id=com.nawaz.ff.ff_redeem_code');
+                                  final webUrl = Uri.parse('https://play.google.com/store/apps/details?id=com.nawaz.ff.ff_redeem_code');
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url);
+                                  } else {
+                                    await launchUrl(webUrl);
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text('Rate Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.share_outlined,
                       label: 'Share App',
                       onTap: () {
                         Share.share(
-                          'Earn free coins with FF Redeem Code app! Download now.',
+                          'Earn free coins and redeem codes with the FF Redeem Code app! Download now: https://play.google.com/store/apps/details?id=com.nawaz.ff.ff_redeem_code',
                         );
                       },
                     ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.help_outline,
                       label: 'FAQ & Help',
-                      onTap: () {},
+                      onTap: () => context.push('/faq-help'),
                     ),
-                    _buildMenuItem(
-                      context,
+                    _AnimatedMenuItem(
                       icon: Icons.logout,
                       label: 'Logout',
                       color: AppColors.error,
@@ -366,30 +442,36 @@ class ProfilePage extends ConsumerWidget {
                           context: context,
                           builder: (_) => AlertDialog(
                             backgroundColor: AppColors.surface,
-                            title: const Text('Logout?'),
-                            content: const Text(
-                                'Are you sure you want to logout?'),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            title: const Text('Logout?', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                            content: const Text('Are you sure you want to logout from your account?', style: TextStyle(color: AppColors.textSecondary)),
                             actions: [
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, false),
-                                child: const Text('Cancel'),
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                               ),
                               ElevatedButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, true),
+                                onPressed: () => Navigator.pop(context, true),
                                 style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.error),
-                                child: const Text('Logout'),
+                                  backgroundColor: Colors.orange,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                                child: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
                         );
                         if (confirm == true) {
-                          await ref
-                              .read(authNotifierProvider.notifier)
-                              .signOut();
-                          if (context.mounted) context.go('/login');
+                          try {
+                            await ref.read(authNotifierProvider.notifier).signOut();
+                            // GoRouter automatically redirects to /login thanks to refreshListenable
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Unable to logout. Please try again.')),
+                              );
+                            }
+                          }
                         }
                       },
                     ),
@@ -475,38 +557,83 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildMenuItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? color,
-    bool showDivider = true,
-  }) {
+}
+
+class _AnimatedMenuItem extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+  final bool showDivider;
+
+  const _AnimatedMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+    this.showDivider = true,
+  });
+
+  @override
+  State<_AnimatedMenuItem> createState() => _AnimatedMenuItemState();
+}
+
+class _AnimatedMenuItemState extends State<_AnimatedMenuItem> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 100));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
-        ListTile(
-          onTap: onTap,
-          leading: Icon(
-            icon,
-            color: color ?? AppColors.textSecondary,
-            size: 22,
-          ),
-          title: Text(
-            label,
-            style: TextStyle(
-              color: color ?? AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
+        ScaleTransition(
+          scale: _scaleAnimation,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTapDown: (_) => _controller.forward(),
+              onTapUp: (_) => _controller.reverse(),
+              onTapCancel: () => _controller.reverse(),
+              onTap: widget.onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                leading: Icon(
+                  widget.icon,
+                  color: widget.color ?? AppColors.textSecondary,
+                  size: 24,
+                ),
+                title: Text(
+                  widget.label,
+                  style: TextStyle(
+                    color: widget.color ?? AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  color: widget.color ?? AppColors.primary.withOpacity(0.5),
+                  size: 16,
+                ).animate(onPlay: (controller) => controller.repeat(reverse: true)).moveX(begin: 0, end: 4, duration: 1.seconds),
+              ),
             ),
           ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            color: AppColors.textHint,
-            size: 14,
-          ),
         ),
-        if (showDivider)
+        if (widget.showDivider)
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Divider(height: 1, color: AppColors.divider),

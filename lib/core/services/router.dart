@@ -11,6 +11,9 @@ import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/redeem/redeem_page.dart';
 import '../../presentation/pages/history/history_page.dart';
 import '../../presentation/pages/profile/profile_page.dart';
+import '../../presentation/pages/profile/privacy_policy_page.dart';
+import '../../presentation/pages/profile/terms_page.dart';
+import '../../presentation/pages/profile/faq_page.dart';
 import '../../presentation/pages/games/scratch_page.dart';
 import '../../presentation/pages/games/spin_page.dart';
 import '../../presentation/pages/games/watch_ads_page.dart';
@@ -21,9 +24,28 @@ import '../../presentation/pages/admin/admin_redeem_codes_page.dart';
 import '../../presentation/pages/admin/admin_user_detail_page.dart';
 import '../../presentation/providers/auth_provider.dart';
 
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+  }
+  late final StreamSubscription<dynamic> _subscription;
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final isLoggedIn = authState.value != null;
@@ -94,6 +116,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsPage(),
+      ),
+      GoRoute(
+        path: '/privacy-policy',
+        builder: (context, state) => const PrivacyPolicyPage(),
+      ),
+      GoRoute(
+        path: '/terms-of-service',
+        builder: (context, state) => const TermsOfServicePage(),
+      ),
+      GoRoute(
+        path: '/faq-help',
+        builder: (context, state) => const FaqHelpPage(),
       ),
       GoRoute(
         path: '/admin',

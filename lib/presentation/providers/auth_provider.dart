@@ -1,6 +1,9 @@
 // lib/presentation/providers/auth_provider.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/services/firebase_service.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -86,6 +89,23 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   }
 
   Future<void> signOut() async {
+    try {
+      // Clear all local storage caches
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      
+      const secureStorage = FlutterSecureStorage();
+      await secureStorage.deleteAll();
+
+      // Clear all Hive boxes without deleting the directory
+      // Only delete from disk if we know the box names, or we can just clear opened boxes.
+      // We will skip Hive complete deletion here to avoid breaking Hive.initFlutter state,
+      // but if there are specific user boxes later, they should be cleared here.
+    } catch (e) {
+      // Ignore errors during local storage clearance to ensure signOut proceeds
+      debugPrint('Error clearing local storage: $e');
+    }
+
     await _authRepo.signOut();
     state = const AsyncValue.data(null);
   }
