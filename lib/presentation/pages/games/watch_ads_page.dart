@@ -63,20 +63,7 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
 
     setState(() => _isAdLoading = true);
 
-    await AdService.showRewardedAd(
-      onUserEarnedReward: (reward, rewardId) async {
-        // Only reward here — never before, never after close, never duplicate
-        final coins = await ref
-            .read(rewardNotifierProvider.notifier)
-            .claimAdReward(rewardId);
-
-        if (coins != null && mounted) {
-          setState(() => _lastReward = coins);
-          // Reset interstitial counter after reward
-          AdService.resetScreenCounter();
-          _showRewardDialog(coins);
-        }
-      },
+    final result = await AdService.showRewardedAd(
       onAdDismissed: () {
         if (mounted) {
           setState(() {
@@ -95,6 +82,20 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
         }
       },
     );
+
+    if (result.rewarded && result.rewardId != null) {
+      // Only reward here — never before, never after close, never duplicate
+      final coins = await ref
+          .read(rewardNotifierProvider.notifier)
+          .claimAdReward(result.rewardId!);
+
+      if (coins != null && mounted) {
+        setState(() => _lastReward = coins);
+        // Reset interstitial counter after reward
+        AdService.resetScreenCounter();
+        _showRewardDialog(coins);
+      }
+    }
   }
 
   void _showRewardDialog(int coins) {

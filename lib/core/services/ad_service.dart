@@ -1,8 +1,22 @@
 // lib/core/services/ad_service.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:uuid/uuid.dart';
 import '../constants/app_constants.dart';
+
+/// Result object returned by showRewardedAd()
+class AdRewardResult {
+  final bool rewarded;
+  final String? rewardId;
+  final RewardItem? reward;
+
+  const AdRewardResult({
+    required this.rewarded,
+    this.rewardId,
+    this.reward,
+  });
+}
 
 class AdService {
   static RewardedAd? _rewardedAd;
@@ -47,18 +61,27 @@ class AdService {
     );
   }
 
-  /// Show a rewarded ad — reward ONLY via onUserEarnedReward per spec
-  static Future<bool> showRewardedAd({
-    required void Function(RewardItem reward, String rewardId) onUserEarnedReward,
+  /// Show a rewarded ad and await the result.
+  ///
+  /// Uses a [Completer] to ensure the Future only resolves AFTER the ad is
+  /// dismissed (with or without a reward). This fixes the race condition where
+  /// the old implementation returned `false` immediately before the
+  /// onUserEarnedReward callback could fire.
+  static Future<AdRewardResult> showRewardedAd({
     VoidCallback? onAdDismissed,
     VoidCallback? onAdFailed,
   }) async {
     if (_rewardedAd == null) {
       onAdFailed?.call();
-      return false;
+      return const AdRewardResult(rewarded: false);
     }
 
+    final completer = Completer<AdRewardResult>();
     bool rewarded = false;
+    String? earnedRewardId;
+    RewardItem? earnedReward;
+
+    final rewardId = const Uuid().v4();
 
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
@@ -67,6 +90,14 @@ class AdService {
         onAdDismissed?.call();
         // Preload next ad
         loadRewardedAd();
+        // Resolve the completer AFTER dismissal so rewarded flag is accurate
+        if (!completer.isCompleted) {
+          completer.complete(AdRewardResult(
+            rewarded: rewarded,
+            rewardId: earnedRewardId,
+            reward: earnedReward,
+          ));
+        }
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         ad.dispose();
@@ -74,19 +105,21 @@ class AdService {
         onAdFailed?.call();
         // Try loading another
         loadRewardedAd();
+        if (!completer.isCompleted) {
+          completer.complete(const AdRewardResult(rewarded: false));
+        }
       },
     );
-
-    final rewardId = const Uuid().v4();
 
     _rewardedAd!.show(
       onUserEarnedReward: (ad, reward) {
         rewarded = true;
-        onUserEarnedReward(reward, rewardId);
+        earnedRewardId = rewardId;
+        earnedReward = reward;
       },
     );
 
-    return rewarded;
+    return completer.future;
   }
 
   /// Check if a rewarded ad is ready

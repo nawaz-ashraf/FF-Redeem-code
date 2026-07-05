@@ -45,6 +45,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
   void initState() {
     super.initState();
     _spinController = AnimationController(vsync: this);
+    _spinAnimation = AlwaysStoppedAnimation(0.0);
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 3));
     AdService.loadRewardedAd();
@@ -68,56 +69,82 @@ class _SpinPageState extends ConsumerState<SpinPage>
       return;
     }
     
-    bool adSuccess = false;
-    await AdService.showRewardedAd(
-      onUserEarnedReward: (_, rewardId) {
-        adSuccess = true;
-        _authorizedRewardId = rewardId;
-      },
-    );
+    final result = await AdService.showRewardedAd();
     
-    if (!adSuccess) return;
+    if (!result.rewarded) return;
 
+    _authorizedRewardId = result.rewardId;
+
+    _spinAnimation = AlwaysStoppedAnimation(_currentAngle);
     setState(() {
       _isSpinning = true;
       _reward = null;
     });
 
-    // Simulate a random winning position
+    // Claim reward first so we know where to stop the wheel
+    final reward = await ref
+        .read(rewardNotifierProvider.notifier)
+        .claimSpinReward(_authorizedRewardId!);
+
+    if (reward == null) {
+      setState(() => _isSpinning = false);
+      final error = ref.read(rewardNotifierProvider).error;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error ?? 'Could not claim spin reward'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    _authorizedRewardId = null;
+
+    // Find the index of the rewarded amount in _rewards list
+    final rewardIndex = _rewards.indexOf(reward);
+    final index = rewardIndex != -1 ? rewardIndex : 0;
+    
+    final sectorAngle = 2 * pi / _rewards.length;
+    
+    // Calculate the exact angle needed to stop at the center of the winning sector
+    // To bring sector [index] to the top (which is 0 offset), we need to rotate 
+    // the wheel by (2*pi - index * sectorAngle)
+    // We also add a small random offset within the sector to make it look natural
     final random = Random();
+    final randomOffsetWithinSector = (random.nextDouble() - 0.5) * (sectorAngle * 0.7);
+    
+    final baseTargetModulo = (2 * pi - (index * sectorAngle)) + randomOffsetWithinSector;
+    
     final extraSpins = 5 + random.nextInt(3); // 5-7 full rotations
-    final targetAngle =
-        _currentAngle + (2 * pi * extraSpins) + random.nextDouble() * 2 * pi;
+    
+    // Calculate how much we need to add to _currentAngle to reach baseTargetModulo
+    final currentModulo = _currentAngle % (2 * pi);
+    double angleDiff = baseTargetModulo - currentModulo;
+    if (angleDiff < 0) {
+      angleDiff += 2 * pi;
+    }
+    
+    final targetAngle = _currentAngle + (2 * pi * extraSpins) + angleDiff;
 
     _spinController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4000),
     );
 
-    _spinAnimation = Tween<double>(
-      begin: _currentAngle,
-      end: targetAngle,
-    ).animate(
-      CurvedAnimation(parent: _spinController, curve: Curves.decelerate),
-    );
+    setState(() {
+      _spinAnimation = Tween<double>(
+        begin: _currentAngle,
+        end: targetAngle,
+      ).animate(
+        CurvedAnimation(parent: _spinController, curve: Curves.decelerate),
+      );
+    });
 
     _spinController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 3500));
-
-    if (_authorizedRewardId == null) {
-      setState(() => _isSpinning = false);
-      return;
-    }
-
-    // Claim reward
-    final reward = await ref
-        .read(rewardNotifierProvider.notifier)
-        .claimSpinReward(_authorizedRewardId!);
-    
-    _authorizedRewardId = null;
-
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 4100));
 
     if (mounted) {
       setState(() {
@@ -126,18 +153,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
         _reward = reward;
       });
       AdService.loadRewardedAd();
-
-      if (reward != null) {
-        _confettiController.play();
-      } else {
-        final error = ref.read(rewardNotifierProvider).error;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error ?? 'Could not claim spin reward'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      _confettiController.play();
     }
   }
 

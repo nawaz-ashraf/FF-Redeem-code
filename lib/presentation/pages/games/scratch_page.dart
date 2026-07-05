@@ -65,16 +65,13 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
         return;
       }
       
-      bool adSuccess = false;
-      await AdService.showRewardedAd(
-        onUserEarnedReward: (_, rewardId) {
-          adSuccess = true;
-          _authorizedRewardId = rewardId;
-        },
-      );
+      final result = await AdService.showRewardedAd();
       
-      if (adSuccess) {
-        setState(() => _isAdWatched = true);
+      if (result.rewarded) {
+        setState(() {
+          _isAdWatched = true;
+          _authorizedRewardId = result.rewardId;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Card Unlocked! Start scratching!')),
         );

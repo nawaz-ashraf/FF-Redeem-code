@@ -28,8 +28,8 @@ class AppSettingsModel {
   factory AppSettingsModel.defaults() {
     return const AppSettingsModel(
       dailyAdLimit: 30,
-      dailyScratchLimit: 2,
-      dailySpinLimit: 2,
+      dailyScratchLimit: 3,
+      dailySpinLimit: 3,
       rewardPerAd: 5,
       rewardDailyLogin: 5,
       minimumRedeem: 2500,

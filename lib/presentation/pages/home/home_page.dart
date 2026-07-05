@@ -431,7 +431,7 @@ class _HomePageState extends ConsumerState<HomePage>
         subtitle: '2-10 coins',
         emoji: '🎴',
         gradient: AppColors.purpleGradient,
-        badge: '2/day',
+        badge: '3/day',
         onTap: () => context.push('/scratch'),
       ),
       RewardCardData(
@@ -439,7 +439,7 @@ class _HomePageState extends ConsumerState<HomePage>
         subtitle: '2-10 coins',
         emoji: '🎡',
         gradient: AppColors.greenGradient,
-        badge: '2/day',
+        badge: '3/day',
         onTap: () => context.push('/spin'),
       ),
       RewardCardData(
@@ -480,14 +480,10 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Widget _buildTodayProgress() {
-    return FutureBuilder<Map<String, int>>(
-      future: ref.read(rewardRepositoryProvider).getDailyLimits(
-            ref.read(currentUserProvider).value?.uid ?? '',
-          ),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox();
-        final limits = snapshot.data!;
+    final dailyLimitsAsync = ref.watch(dailyLimitsProvider);
 
+    return dailyLimitsAsync.when(
+      data: (limits) {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -507,21 +503,21 @@ class _HomePageState extends ConsumerState<HomePage>
               const SizedBox(height: 16),
               _buildProgressRow(
                 '📺 Ads Watched',
-                AppConstants.maxDailyAds - (limits['adsRemaining'] ?? 30),
+                AppConstants.maxDailyAds - (limits['adsRemaining'] ?? AppConstants.maxDailyAds),
                 AppConstants.maxDailyAds,
                 AppColors.accent2,
               ),
               const SizedBox(height: 12),
               _buildProgressRow(
                 '🎴 Scratch Cards',
-                AppConstants.maxDailyScratch - (limits['scratchRemaining'] ?? 2),
+                AppConstants.maxDailyScratch - (limits['scratchRemaining'] ?? AppConstants.maxDailyScratch),
                 AppConstants.maxDailyScratch,
                 AppColors.accent1,
               ),
               const SizedBox(height: 12),
               _buildProgressRow(
                 '🎡 Spin Wheel',
-                AppConstants.maxDailySpin - (limits['spinRemaining'] ?? 2),
+                AppConstants.maxDailySpin - (limits['spinRemaining'] ?? AppConstants.maxDailySpin),
                 AppConstants.maxDailySpin,
                 AppColors.accent3,
               ),
@@ -529,6 +525,8 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         );
       },
+      loading: () => const SizedBox(),
+      error: (_, __) => const SizedBox(),
     );
   }
 

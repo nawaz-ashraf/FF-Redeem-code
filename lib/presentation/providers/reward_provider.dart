@@ -23,6 +23,13 @@ final dailyLimitsProvider = FutureProvider<Map<String, int>>((ref) async {
   return repo.getDailyLimits(userId);
 });
 
+/// Invalidate all reward-related providers so UI refreshes in real-time.
+/// Call this after every successful reward claim (ad, scratch, spin, daily login).
+void refreshAllRewardData(Ref ref) {
+  ref.invalidate(dailyLimitsProvider);
+  ref.invalidate(currentUserProvider);
+}
+
 // Withdrawals stream
 final userWithdrawalsProvider =
     StreamProvider<List<WithdrawalModel>>((ref) {
@@ -75,14 +82,17 @@ class RewardState {
 class RewardNotifier extends StateNotifier<RewardState> {
   final RewardRepository _repo;
   final String userId;
+  final Ref _ref;
 
-  RewardNotifier(this._repo, this.userId) : super(const RewardState());
+  RewardNotifier(this._repo, this.userId, this._ref) : super(const RewardState());
 
   Future<int?> claimAdReward(String rewardId) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final coins = await _repo.claimAdReward(userId, rewardId);
       state = state.copyWith(isLoading: false, lastReward: coins);
+      // Refresh all providers so UI updates in real-time
+      refreshAllRewardData(_ref);
       return coins;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -95,6 +105,7 @@ class RewardNotifier extends StateNotifier<RewardState> {
     try {
       final coins = await _repo.claimScratchReward(userId, rewardId);
       state = state.copyWith(isLoading: false, lastReward: coins);
+      refreshAllRewardData(_ref);
       return coins;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -107,6 +118,7 @@ class RewardNotifier extends StateNotifier<RewardState> {
     try {
       final coins = await _repo.claimSpinReward(userId, rewardId);
       state = state.copyWith(isLoading: false, lastReward: coins);
+      refreshAllRewardData(_ref);
       return coins;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -119,6 +131,7 @@ class RewardNotifier extends StateNotifier<RewardState> {
     try {
       final result = await _repo.claimDailyLogin(userId);
       state = state.copyWith(isLoading: false, lastReward: result['coins']);
+      refreshAllRewardData(_ref);
       return result;
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -131,5 +144,6 @@ final rewardNotifierProvider =
     StateNotifierProvider<RewardNotifier, RewardState>((ref) {
   final authState = ref.watch(authStateProvider);
   final userId = authState.value?.uid ?? '';
-  return RewardNotifier(ref.watch(rewardRepositoryProvider), userId);
+  return RewardNotifier(ref.watch(rewardRepositoryProvider), userId, ref);
 });
+

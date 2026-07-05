@@ -455,24 +455,28 @@ class _RedeemPackageCard extends StatelessWidget {
                   ],
                 ),
               ),
-              ElevatedButton(
-                onPressed: canAfford ? onRedeem : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: package.gradient.colors.first,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  disabledBackgroundColor:
-                      Colors.white.withOpacity(0.3),
-                  minimumSize: const Size(80, 36),
-                ),
-                child: Text(
-                  canAfford ? 'Redeem' : 'Need More',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
+              Flexible(
+                child: ElevatedButton(
+                  onPressed: canAfford ? onRedeem : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: package.gradient.colors.first,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    disabledBackgroundColor:
+                        Colors.white.withOpacity(0.3),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      canAfford ? 'Redeem' : 'Need More',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ),
               ),
