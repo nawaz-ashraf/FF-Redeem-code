@@ -285,125 +285,77 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current Balance',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    AnimatedBuilder(
-                      animation: _coinPulseController,
-                      builder: (context, child) => Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            user.coins.toString(),
-                            style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.gold,
-                              letterSpacing: -1,
-                              shadows: [
-                                Shadow(
-                                  color: AppColors.gold.withOpacity(
-                                    0.3 + _coinPulseController.value * 0.2,
-                                  ),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8, left: 6),
-                            child: Text(
-                              'coins',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Current Balance',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AnimatedBuilder(
+                  animation: _coinPulseController,
+                  builder: (context, child) => Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        user.coins.toString(),
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.gold,
+                          letterSpacing: -1,
+                          shadows: [
+                            Shadow(
+                              color: AppColors.gold.withOpacity(
+                                0.3 + _coinPulseController.value * 0.2,
                               ),
+                              blurRadius: 10,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8, left: 6),
+                        child: Text(
+                          'coins',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: AppColors.goldGradient,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.gold.withOpacity(0.4),
-                      blurRadius: 16,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text('🪙', style: TextStyle(fontSize: 32)),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              _buildStatChip('📊', user.totalEarnedCoins.toString(), 'Total Earned'),
-              const SizedBox(width: 8),
-              _buildStatChip('✅', user.totalRedeemedCoins.toString(), 'Redeemed'),
-              const SizedBox(width: 8),
-              _buildStatChip('👥', '${user.referralCount}', 'Referrals'),
-            ],
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppColors.goldGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.gold.withOpacity(0.4),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Text('🪙', style: TextStyle(fontSize: 32)),
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatChip(String emoji, String value, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 9,
-                color: AppColors.textHint,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

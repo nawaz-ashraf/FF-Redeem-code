@@ -406,7 +406,7 @@ class _RedeemPackageCard extends StatelessWidget {
     return Stack(
       children: [
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
             gradient: package.gradient,
             borderRadius: BorderRadius.circular(20),
@@ -422,9 +422,9 @@ class _RedeemPackageCard extends StatelessWidget {
             children: [
               Text(
                 package.emoji,
-                style: const TextStyle(fontSize: 36),
+                style: const TextStyle(fontSize: 28),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,50 +432,57 @@ class _RedeemPackageCard extends StatelessWidget {
                     Text(
                       package.name,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Text('🪙',
-                            style: TextStyle(fontSize: 14)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${package.coins} coins',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.w600,
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: '🪙 ',
+                            style: TextStyle(fontSize: 14),
                           ),
-                        ),
-                      ],
+                          TextSpan(
+                            text: '${package.coins} coins',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              Flexible(
-                child: ElevatedButton(
-                  onPressed: canAfford ? onRedeem : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: package.gradient.colors.first,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    disabledBackgroundColor:
-                        Colors.white.withOpacity(0.3),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      canAfford ? 'Redeem' : 'Need More',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                      ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: canAfford ? onRedeem : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: package.gradient.colors.first,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  disabledBackgroundColor:
+                      Colors.white.withOpacity(0.3),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    canAfford ? 'Redeem' : 'Need More',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
                     ),
                   ),
                 ),
