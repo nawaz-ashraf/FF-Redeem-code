@@ -64,11 +64,11 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
     setState(() => _isAdLoading = true);
 
     await AdService.showRewardedAd(
-      onUserEarnedReward: (reward) async {
+      onUserEarnedReward: (reward, rewardId) async {
         // Only reward here — never before, never after close, never duplicate
         final coins = await ref
             .read(rewardNotifierProvider.notifier)
-            .claimAdReward();
+            .claimAdReward(rewardId);
 
         if (coins != null && mounted) {
           setState(() => _lastReward = coins);

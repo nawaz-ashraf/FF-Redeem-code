@@ -25,6 +25,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
   bool _isScratching = false;
   bool _isRevealed = false;
   bool _isAdWatched = false;
+  String? _authorizedRewardId;
   int? _reward;
   int _scratchPercent = 0;
   List<Offset> _scratchedAreas = [];
@@ -66,8 +67,9 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
       
       bool adSuccess = false;
       await AdService.showRewardedAd(
-        onUserEarnedReward: (_) {
+        onUserEarnedReward: (_, rewardId) {
           adSuccess = true;
+          _authorizedRewardId = rewardId;
         },
       );
       
@@ -82,9 +84,14 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
 
     setState(() => _isScratching = true);
 
+    if (_authorizedRewardId == null) {
+      setState(() => _isScratching = false);
+      return;
+    }
+
     final reward = await ref
         .read(rewardNotifierProvider.notifier)
-        .claimScratchReward();
+        .claimScratchReward(_authorizedRewardId!);
 
     if (mounted) {
       if (reward != null) {
@@ -246,6 +253,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                             setState(() {
                               _isRevealed = false;
                               _isAdWatched = false;
+                              _authorizedRewardId = null;
                               _reward = null;
                               _scratchedAreas = [];
                               _scratchPercent = 0;

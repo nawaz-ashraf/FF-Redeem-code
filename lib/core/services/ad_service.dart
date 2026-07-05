@@ -1,6 +1,7 @@
 // lib/core/services/ad_service.dart
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:uuid/uuid.dart';
 import '../constants/app_constants.dart';
 
 class AdService {
@@ -48,7 +49,7 @@ class AdService {
 
   /// Show a rewarded ad — reward ONLY via onUserEarnedReward per spec
   static Future<bool> showRewardedAd({
-    required void Function(RewardItem reward) onUserEarnedReward,
+    required void Function(RewardItem reward, String rewardId) onUserEarnedReward,
     VoidCallback? onAdDismissed,
     VoidCallback? onAdFailed,
   }) async {
@@ -76,10 +77,12 @@ class AdService {
       },
     );
 
+    final rewardId = const Uuid().v4();
+
     _rewardedAd!.show(
       onUserEarnedReward: (ad, reward) {
         rewarded = true;
-        onUserEarnedReward(reward);
+        onUserEarnedReward(reward, rewardId);
       },
     );
 

@@ -39,39 +39,95 @@ class UserRepository {
         .update(data);
   }
 
-  /// Add coins to a user with transaction logging including balance tracking
+  /// Add coins to a user with transaction logging including balance tracking and duplicate prevention
   Future<void> addCoins({
     required String userId,
     required int coins,
     required TransactionType type,
     required String description,
-    String? referenceId,
+    String? transactionId,
   }) async {
     await _firestore.runTransaction((tx) async {
+      final txRef = transactionId != null
+          ? _firestore.collection(AppConstants.transactionsCollection).doc(transactionId)
+          : _firestore.collection(AppConstants.transactionsCollection).doc();
+
+      if (transactionId != null) {
+        final txDoc = await tx.get(txRef);
+        if (txDoc.exists) {
+          throw Exception('Duplicate reward transaction detected.');
+        }
+      }
+
       final userRef = _firestore
           .collection(AppConstants.usersCollection)
           .doc(userId);
       final userDoc = await tx.get(userRef);
 
       if (!userDoc.exists) return;
-      final currentCoins = (userDoc.data()!['coins'] ?? 0).toInt();
+      final data = userDoc.data()!;
+      final currentCoins = (data['coins'] ?? 0).toInt();
 
-      tx.update(userRef, {
+      final now = DateTime.now();
+      final todayStr = '${now.year}-${now.month}-${now.day}';
+
+      final updates = <String, dynamic>{
         'coins': FieldValue.increment(coins),
         'totalEarnedCoins': FieldValue.increment(coins),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      };
 
-      final txRef = _firestore
-          .collection(AppConstants.transactionsCollection)
-          .doc();
+      if (type == TransactionType.rewardedAd) {
+        final lastDate = data['lastAdDate'] is Timestamp
+            ? (data['lastAdDate'] as Timestamp).toDate()
+            : null;
+        final lastStr = lastDate != null
+            ? '${lastDate.year}-${lastDate.month}-${lastDate.day}'
+            : '';
+        if (lastStr != todayStr) {
+          updates['adsToday'] = 1;
+          updates['lastAdDate'] = FieldValue.serverTimestamp();
+        } else {
+          updates['adsToday'] = FieldValue.increment(1);
+        }
+        updates['totalAdsWatched'] = FieldValue.increment(1);
+      } else if (type == TransactionType.scratch) {
+        final lastDate = data['lastScratchDate'] is Timestamp
+            ? (data['lastScratchDate'] as Timestamp).toDate()
+            : null;
+        final lastStr = lastDate != null
+            ? '${lastDate.year}-${lastDate.month}-${lastDate.day}'
+            : '';
+        if (lastStr != todayStr) {
+          updates['scratchToday'] = 1;
+          updates['lastScratchDate'] = FieldValue.serverTimestamp();
+        } else {
+          updates['scratchToday'] = FieldValue.increment(1);
+        }
+      } else if (type == TransactionType.spin) {
+        final lastDate = data['lastSpinDate'] is Timestamp
+            ? (data['lastSpinDate'] as Timestamp).toDate()
+            : null;
+        final lastStr = lastDate != null
+            ? '${lastDate.year}-${lastDate.month}-${lastDate.day}'
+            : '';
+        if (lastStr != todayStr) {
+          updates['spinToday'] = 1;
+          updates['lastSpinDate'] = FieldValue.serverTimestamp();
+        } else {
+          updates['spinToday'] = FieldValue.increment(1);
+        }
+      }
+
+      tx.update(userRef, updates);
+
       tx.set(txRef, {
         'userId': userId,
         'type': type.name,
         'rewardAmount': coins,
         'balanceBefore': currentCoins,
         'balanceAfter': currentCoins + coins,
-        'referenceId': referenceId,
+        'referenceId': transactionId,
         'description': description,
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'completed',
@@ -192,113 +248,7 @@ class UserRepository {
     });
   }
 
-  /// Update daily counter for ads watched
-  Future<void> incrementAdsToday(String userId) async {
-    final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month}-${now.day}';
-
-    await _firestore.runTransaction((tx) async {
-      final userRef = _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(userId);
-      final userDoc = await tx.get(userRef);
-      if (!userDoc.exists) return;
-
-      final data = userDoc.data()!;
-      final lastAdDate = data['lastAdDate'] is Timestamp
-          ? (data['lastAdDate'] as Timestamp).toDate()
-          : null;
-      final lastAdStr = lastAdDate != null
-          ? '${lastAdDate.year}-${lastAdDate.month}-${lastAdDate.day}'
-          : '';
-
-      if (lastAdStr != todayStr) {
-        // New day, reset counter
-        tx.update(userRef, {
-          'adsToday': 1,
-          'lastAdDate': FieldValue.serverTimestamp(),
-          'totalAdsWatched': FieldValue.increment(1),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        tx.update(userRef, {
-          'adsToday': FieldValue.increment(1),
-          'totalAdsWatched': FieldValue.increment(1),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    });
-  }
-
-  /// Update daily counter for scratch cards
-  Future<void> incrementScratchToday(String userId) async {
-    final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month}-${now.day}';
-
-    await _firestore.runTransaction((tx) async {
-      final userRef = _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(userId);
-      final userDoc = await tx.get(userRef);
-      if (!userDoc.exists) return;
-
-      final data = userDoc.data()!;
-      final lastDate = data['lastScratchDate'] is Timestamp
-          ? (data['lastScratchDate'] as Timestamp).toDate()
-          : null;
-      final lastStr = lastDate != null
-          ? '${lastDate.year}-${lastDate.month}-${lastDate.day}'
-          : '';
-
-      if (lastStr != todayStr) {
-        tx.update(userRef, {
-          'scratchToday': 1,
-          'lastScratchDate': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        tx.update(userRef, {
-          'scratchToday': FieldValue.increment(1),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    });
-  }
-
-  /// Update daily counter for spins
-  Future<void> incrementSpinToday(String userId) async {
-    final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month}-${now.day}';
-
-    await _firestore.runTransaction((tx) async {
-      final userRef = _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(userId);
-      final userDoc = await tx.get(userRef);
-      if (!userDoc.exists) return;
-
-      final data = userDoc.data()!;
-      final lastDate = data['lastSpinDate'] is Timestamp
-          ? (data['lastSpinDate'] as Timestamp).toDate()
-          : null;
-      final lastStr = lastDate != null
-          ? '${lastDate.year}-${lastDate.month}-${lastDate.day}'
-          : '';
-
-      if (lastStr != todayStr) {
-        tx.update(userRef, {
-          'spinToday': 1,
-          'lastSpinDate': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        tx.update(userRef, {
-          'spinToday': FieldValue.increment(1),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
-    });
-  }
+  // incrementAdsToday, incrementScratchToday, incrementSpinToday removed as they are now handled atomically in addCoins
 
   /// Upload profile picture to Firebase Storage
   Future<String?> uploadProfilePicture(String userId, File file) async {

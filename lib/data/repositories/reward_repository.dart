@@ -17,7 +17,7 @@ class RewardRepository {
   // ── AD REWARDS ──────────────────────────────────────────
 
   /// Claim reward for watching ad. Validates both local and server-side limits.
-  Future<int> claimAdReward(String userId) async {
+  Future<int> claimAdReward(String userId, String rewardId) async {
     final prefs = await _prefs;
     final today = AppUtils.formatDate(DateTime.now());
     final lastDate = prefs.getString(AppConstants.lastAdRewardDateKey);
@@ -35,43 +35,14 @@ class RewardRepository {
       );
     }
 
-    // Server-side duplicate prevention via Firestore
-    final todayStart = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    );
-
-    final existingRewards = await _firestore
-        .collection(AppConstants.adRewardsCollection)
-        .where('userId', isEqualTo: userId)
-        .where('createdAt',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(todayStart))
-        .get();
-
-    if (existingRewards.docs.length >= AppConstants.maxDailyAds) {
-      throw const LimitExceededException(
-        message: 'Daily ad reward limit reached.',
-      );
-    }
-
-    // Add coins with balance tracking
+    // Add coins with balance tracking and atomic duplicate prevention
     await _userRepo.addCoins(
       userId: userId,
       coins: AppConstants.adRewardCoins,
       type: TransactionType.rewardedAd,
       description: 'Rewarded ad #${adCount + 1}',
+      transactionId: rewardId,
     );
-
-    // Log ad reward event
-    await _firestore.collection(AppConstants.adRewardsCollection).add({
-      'userId': userId,
-      'coins': AppConstants.adRewardCoins,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    // Update daily counter on user document
-    await _userRepo.incrementAdsToday(userId);
 
     adCount++;
     await prefs.setInt(AppConstants.dailyAdCountKey, adCount);
@@ -87,7 +58,7 @@ class RewardRepository {
   // ── SCRATCH CARD ─────────────────────────────────────────
 
   /// Claim scratch card reward with limit validation
-  Future<int> claimScratchReward(String userId) async {
+  Future<int> claimScratchReward(String userId, String rewardId) async {
     final prefs = await _prefs;
     final today = AppUtils.formatDate(DateTime.now());
     final lastDate = prefs.getString('last_scratch_date');
@@ -115,16 +86,8 @@ class RewardRepository {
       coins: reward,
       type: TransactionType.scratch,
       description: 'Scratch card reward',
+      transactionId: rewardId,
     );
-
-    await _firestore.collection(AppConstants.scratchHistoryCollection).add({
-      'userId': userId,
-      'coins': reward,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    // Update daily counter on user document
-    await _userRepo.incrementScratchToday(userId);
 
     count++;
     await prefs.setInt(AppConstants.dailyScratchCountKey, count);
@@ -138,7 +101,7 @@ class RewardRepository {
   // ── SPIN WHEEL ───────────────────────────────────────────
 
   /// Claim spin wheel reward with limit validation
-  Future<int> claimSpinReward(String userId) async {
+  Future<int> claimSpinReward(String userId, String rewardId) async {
     final prefs = await _prefs;
     final today = AppUtils.formatDate(DateTime.now());
     final lastDate = prefs.getString('last_spin_date');
@@ -164,16 +127,8 @@ class RewardRepository {
       coins: reward,
       type: TransactionType.spin,
       description: 'Spin wheel reward',
+      transactionId: rewardId,
     );
-
-    await _firestore.collection(AppConstants.spinHistoryCollection).add({
-      'userId': userId,
-      'coins': reward,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    // Update daily counter on user document
-    await _userRepo.incrementSpinToday(userId);
 
     count++;
     await prefs.setInt(AppConstants.dailySpinCountKey, count);

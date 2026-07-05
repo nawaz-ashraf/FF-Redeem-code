@@ -78,10 +78,10 @@ class RewardNotifier extends StateNotifier<RewardState> {
 
   RewardNotifier(this._repo, this.userId) : super(const RewardState());
 
-  Future<int?> claimAdReward() async {
+  Future<int?> claimAdReward(String rewardId) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final coins = await _repo.claimAdReward(userId);
+      final coins = await _repo.claimAdReward(userId, rewardId);
       state = state.copyWith(isLoading: false, lastReward: coins);
       return coins;
     } catch (e) {
@@ -90,10 +90,10 @@ class RewardNotifier extends StateNotifier<RewardState> {
     }
   }
 
-  Future<int?> claimScratchReward() async {
+  Future<int?> claimScratchReward(String rewardId) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final coins = await _repo.claimScratchReward(userId);
+      final coins = await _repo.claimScratchReward(userId, rewardId);
       state = state.copyWith(isLoading: false, lastReward: coins);
       return coins;
     } catch (e) {
@@ -102,10 +102,10 @@ class RewardNotifier extends StateNotifier<RewardState> {
     }
   }
 
-  Future<int?> claimSpinReward() async {
+  Future<int?> claimSpinReward(String rewardId) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final coins = await _repo.claimSpinReward(userId);
+      final coins = await _repo.claimSpinReward(userId, rewardId);
       state = state.copyWith(isLoading: false, lastReward: coins);
       return coins;
     } catch (e) {

@@ -24,6 +24,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
   late ConfettiController _confettiController;
 
   bool _isSpinning = false;
+  String? _authorizedRewardId;
   int? _reward;
   double _currentAngle = 0;
 
@@ -69,8 +70,9 @@ class _SpinPageState extends ConsumerState<SpinPage>
     
     bool adSuccess = false;
     await AdService.showRewardedAd(
-      onUserEarnedReward: (_) {
+      onUserEarnedReward: (_, rewardId) {
         adSuccess = true;
+        _authorizedRewardId = rewardId;
       },
     );
     
@@ -103,10 +105,17 @@ class _SpinPageState extends ConsumerState<SpinPage>
 
     await Future.delayed(const Duration(milliseconds: 3500));
 
+    if (_authorizedRewardId == null) {
+      setState(() => _isSpinning = false);
+      return;
+    }
+
     // Claim reward
     final reward = await ref
         .read(rewardNotifierProvider.notifier)
-        .claimSpinReward();
+        .claimSpinReward(_authorizedRewardId!);
+    
+    _authorizedRewardId = null;
 
     await Future.delayed(const Duration(milliseconds: 600));
 
