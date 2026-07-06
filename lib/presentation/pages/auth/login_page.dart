@@ -92,7 +92,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                       child: const Center(
                         child: Text(
-                          'FF',
+                          'Game',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w900,
