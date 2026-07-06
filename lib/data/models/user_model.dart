@@ -7,6 +7,7 @@ class UserModel {
   final String uuid;
   final String deviceId;
   final String? email;
+  final String? password;
   final String? profileImage;
 
   // Coin balances
@@ -58,6 +59,7 @@ class UserModel {
     required this.uuid,
     required this.deviceId,
     this.email,
+    this.password,
     this.profileImage,
     required this.coins,
     required this.totalEarnedCoins,
@@ -94,6 +96,7 @@ class UserModel {
       uuid: data['uuid'] ?? doc.id,
       deviceId: data['deviceId'] ?? '',
       email: data['email'],
+      password: data['password'],
       profileImage: data['profileImage'] ?? data['profilePicUrl'],
       coins: (data['coins'] ?? 0).toInt(),
       totalEarnedCoins:
@@ -132,6 +135,7 @@ class UserModel {
       'uuid': uuid,
       'deviceId': deviceId,
       'email': email,
+      if (password != null) 'password': password,
       'profileImage': profileImage,
       'coins': coins,
       'totalEarnedCoins': totalEarnedCoins,
@@ -169,6 +173,7 @@ class UserModel {
     String? name,
     String? uuid,
     String? email,
+    String? password,
     String? profileImage,
     int? coins,
     int? totalEarnedCoins,
@@ -197,6 +202,7 @@ class UserModel {
       uuid: uuid ?? this.uuid,
       deviceId: deviceId,
       email: email ?? this.email,
+      password: password ?? this.password,
       profileImage: profileImage ?? this.profileImage,
       coins: coins ?? this.coins,
       totalEarnedCoins: totalEarnedCoins ?? this.totalEarnedCoins,

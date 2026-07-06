@@ -1,13 +1,15 @@
 // lib/presentation/pages/auth/login_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../core/errors/app_exception.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/validators/validators.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/app_text_field.dart';
+import '../../widgets/common/gradient_button.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -48,9 +50,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) {
+        final message = e is AppException
+            ? e.message
+            : 'Something went wrong. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(message),
             backgroundColor: AppColors.error,
           ),
         );
@@ -85,6 +90,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     child: Container(
                       width: 80,
                       height: 80,
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(22),
                         gradient: AppColors.primaryGradient,
@@ -97,12 +103,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ],
                       ),
                       child: const Center(
-                        child: Text(
-                          'Game',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                        child: FittedBox(
+                          child: Text(
+                            'Game',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -141,11 +149,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     hint: 'Enter your email',
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Email is required';
-                      if (!v.contains('@')) return 'Enter a valid email';
-                      return null;
-                    },
+                    validator: Validators.email,
                   )
                       .animate(delay: 400.ms)
                       .slideY(begin: 0.3, duration: 400.ms)
@@ -181,20 +185,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () async {
-                        if (_emailCtrl.text.isNotEmpty) {
-                          await ref
-                              .read(authRepositoryProvider)
-                              .sendPasswordReset(_emailCtrl.text.trim());
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Password reset email sent!')),
-                            );
-                          }
-                        }
+                      onPressed: () {
+                        final email = _emailCtrl.text.trim();
+                        final path = email.isNotEmpty
+                            ? '/forgot-password?email=${Uri.encodeComponent(email)}'
+                            : '/forgot-password';
+                        context.go(path);
                       },
-                      child: Text(
+                      child: const Text(
                         'Forgot Password?',
                         style: TextStyle(color: AppColors.primary),
                       ),
@@ -217,13 +215,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
+                        const Text(
                           "Don't have an account? ",
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
                         GestureDetector(
                           onTap: () => context.go('/register'),
-                          child: Text(
+                          child: const Text(
                             'Register',
                             style: TextStyle(
                               color: AppColors.primary,
@@ -235,7 +233,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ).animate(delay: 700.ms).fade(duration: 400.ms),
                   const SizedBox(height: 20),
-                  Center(
+                  const Center(
                     child: Text(
                       '⚠️ Rewards are subject to availability',
                       style: TextStyle(

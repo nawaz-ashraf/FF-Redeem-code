@@ -14,8 +14,6 @@ import '../../widgets/common/coin_balance_widget.dart';
 import '../../widgets/home/reward_card.dart';
 import '../../widgets/home/streak_widget.dart';
 import '../../widgets/home/notice_banner.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import '../../../core/services/ad_service.dart';
 import '../../widgets/home/daily_login_dialog.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -28,8 +26,6 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage>
     with TickerProviderStateMixin {
   late AnimationController _coinPulseController;
-  BannerAd? _bannerAd;
-  bool _isBannerLoaded = false;
 
   @override
   void initState() {
@@ -42,27 +38,6 @@ class _HomePageState extends ConsumerState<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDailyLogin();
     });
-
-    _loadBannerAd();
-  }
-
-  void _loadBannerAd() {
-    _bannerAd = AdService.createBannerAd(
-      onLoaded: () {
-        if (mounted) {
-          setState(() {
-            _isBannerLoaded = true;
-          });
-        }
-      },
-      onFailed: () {
-        if (mounted) {
-          setState(() {
-            _isBannerLoaded = false;
-          });
-        }
-      },
-    );
   }
 
   Future<void> _checkDailyLogin() async {
@@ -84,7 +59,6 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void dispose() {
     _coinPulseController.dispose();
-    AdService.disposeBannerAd();
     super.dispose();
   }
 
@@ -101,14 +75,6 @@ class _HomePageState extends ConsumerState<HomePage>
           return _buildHomeContent(user);
         },
       ),
-      bottomNavigationBar: _isBannerLoaded && _bannerAd != null
-          ? Container(
-              alignment: Alignment.center,
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : null,
     );
   }
 

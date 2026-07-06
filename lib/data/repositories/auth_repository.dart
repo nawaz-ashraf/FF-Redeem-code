@@ -7,6 +7,7 @@ import 'dart:io';
 import '../../core/constants/app_constants.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/services/firebase_service.dart';
+import '../../core/utils/auth_error_mapper.dart';
 import '../models/user_model.dart';
 
 class AuthRepository {
@@ -34,20 +35,23 @@ class AuthRepository {
     required String email,
     required String password,
     String? referralCode,
+    bool skipUniquenessCheck = false,
   }) async {
 
     // 2. Device ID check — one device, one UID, one registration
     final deviceId = await _getDeviceId();
-    final deviceQuery = await _firestore
-        .collection(AppConstants.usersCollection)
-        .where('deviceId', isEqualTo: deviceId)
-        .limit(1)
-        .get();
+    if (!skipUniquenessCheck) {
+      final deviceQuery = await _firestore
+          .collection(AppConstants.usersCollection)
+          .where('deviceId', isEqualTo: deviceId)
+          .limit(1)
+          .get();
 
-    if (deviceQuery.docs.isNotEmpty) {
-      throw const DuplicateAccountException(
-        message: 'This device already has a registered account.',
-      );
+      if (deviceQuery.docs.isNotEmpty) {
+        throw const DuplicateAccountException(
+          message: 'This device already has a registered account.',
+        );
+      }
     }
 
     // 3. Check if device is banned
@@ -64,10 +68,15 @@ class AuthRepository {
     }
 
     // 4. Create Firebase Auth user
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    final UserCredential credential;
+    try {
+      credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(message: mapFirebaseAuthError(e.code));
+    }
 
     final userId = credential.user!.uid;
     final newReferralCode = 'FF${userId.substring(0, 6).toUpperCase()}';
@@ -104,6 +113,7 @@ class AuthRepository {
       uuid: newUuid,
       deviceId: deviceId,
       email: email,
+      password: password,
       coins: 0,
       totalEarnedCoins: 0,
       totalRedeemedCoins: 0,
@@ -189,10 +199,15 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    final UserCredential credential;
+    try {
+      credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(message: mapFirebaseAuthError(e.code));
+    }
 
     final userId = credential.user!.uid;
     final doc = await _firestore
@@ -252,7 +267,11 @@ class AuthRepository {
 
   /// Send password reset email
   Future<void> sendPasswordReset(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(message: mapFirebaseAuthError(e.code));
+    }
   }
 
   /// Delete user account and Firestore document

@@ -125,9 +125,9 @@ class AdService {
   /// Check if a rewarded ad is ready
   static bool get isRewardedAdReady => _rewardedAd != null;
 
-  // ── BANNER ADS (Home Screen Bottom Only) ──────────────────
+  // ── BANNER ADS (Main Shell Tabs) ──────────────────────────
 
-  /// Create a banner ad for the home screen
+  /// Create a banner ad for the main tab shell (above bottom nav)
   static BannerAd? createBannerAd({
     VoidCallback? onLoaded,
     VoidCallback? onFailed,

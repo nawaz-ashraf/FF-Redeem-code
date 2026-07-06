@@ -6,6 +6,7 @@ import '../../presentation/pages/splash/splash_page.dart';
 import '../../presentation/pages/onboarding/onboarding_page.dart';
 import '../../presentation/pages/auth/login_page.dart';
 import '../../presentation/pages/auth/register_page.dart';
+import '../../presentation/pages/auth/forgot_password_page.dart';
 import '../../presentation/pages/home/main_shell.dart';
 import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/redeem/redeem_page.dart';
@@ -77,6 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = authState.value != null;
       final isGoingToAuth = state.matchedLocation.startsWith('/login') ||
           state.matchedLocation.startsWith('/register') ||
+          state.matchedLocation.startsWith('/forgot-password') ||
           state.matchedLocation.startsWith('/onboarding');
       final isGoingToSplash = state.matchedLocation == '/splash';
 
@@ -104,6 +106,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'];
+          return ForgotPasswordPage(initialEmail: email);
+        },
       ),
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),

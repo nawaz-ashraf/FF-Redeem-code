@@ -1,19 +1,17 @@
 // lib/presentation/pages/profile/profile_page.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/reward_provider.dart';
-import '../../providers/notification_provider.dart';
 import '../../../data/models/user_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../../providers/auth_provider.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -93,22 +91,23 @@ class ProfilePage extends ConsumerWidget {
                                 ),
                               ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.surface,
-                            border:
-                                Border.all(color: AppColors.primary, width: 2),
-                          ),
-                          child: const Icon(Icons.edit,
-                              size: 14, color: AppColors.primary),
-                        ),
-                      ),
+                      // Positioned(
+                      //   bottom: 0,
+                      //   right: 0,
+                      //   child: Container(
+                      //     width: 28,
+                      //     height: 28,
+                      //     decoration: BoxDecoration(
+                      //       shape: BoxShape.circle,
+                      //       color: AppColors.surface,
+                      //       border:
+                      //           Border.all(color: AppColors.primary, width: 2),
+                      //     ),
+                      //     child:
+                      //     const Icon(Icons.edit,
+                      //         size: 14, color: AppColors.primary),
+                      //   ),
+                      // ),
                     ],
                   ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                   const SizedBox(height: 12),
@@ -122,7 +121,7 @@ class ProfilePage extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     'ID: ${user.uuid.substring(0, 8).toUpperCase()}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -467,7 +466,7 @@ class ProfilePage extends ConsumerWidget {
                       onTap: () async {
                         final confirm = await showDialog<bool>(
                           context: context,
-                          builder: (_) => AlertDialog(
+                          builder: (dialogContext) => AlertDialog(
                             backgroundColor: AppColors.surface,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20)),
@@ -481,12 +480,14 @@ class ProfilePage extends ConsumerWidget {
                                     TextStyle(color: AppColors.textSecondary)),
                             actions: [
                               TextButton(
-                                onPressed: () => Navigator.pop(context, false),
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(false),
                                 child: const Text('Cancel',
                                     style: TextStyle(color: Colors.grey)),
                               ),
                               ElevatedButton(
-                                onPressed: () => Navigator.pop(context, true),
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.orange,
                                   shape: RoundedRectangleBorder(
@@ -500,37 +501,30 @@ class ProfilePage extends ConsumerWidget {
                             ],
                           ),
                         );
-                        if (confirm == true) {
+                        if (confirm == true && context.mounted) {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
                           try {
-                            debugPrint('Logout Pressed');
-                            debugPrint('Calling Firebase signOut');
                             await ref
                                 .read(authNotifierProvider.notifier)
                                 .signOut();
-                            debugPrint('Firebase SignOut Complete');
-                            debugPrint(
-                                'Current user: ${FirebaseAuth.instance.currentUser}');
-
-                            debugPrint('Invalidating providers');
-                            ref.invalidate(authStateProvider);
-                            ref.invalidate(currentUserProvider);
-                            ref.invalidate(authNotifierProvider);
-                            ref.invalidate(rewardNotifierProvider);
-                            ref.invalidate(dailyLimitsProvider);
-                            ref.invalidate(userWithdrawalsProvider);
-                            ref.invalidate(notificationsProvider);
-                            ref.invalidate(unreadNotificationCountProvider);
-
-                            debugPrint('Navigating to Login');
-                            // GoRouter automatically redirects to /login thanks to RouterNotifier
-                            // If we call context.go('/login') here while the widget tree is rebuilding,
-                            // it can cause a BuildContext exception or a silent navigation failure.
+                            if (context.mounted) {
+                              Navigator.of(context, rootNavigator: true).pop();
+                              context.go('/login');
+                            }
                           } catch (e) {
                             if (context.mounted) {
+                              Navigator.of(context, rootNavigator: true).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text(
-                                        'Unable to logout. Please try again.')),
+                                  content: Text(
+                                      'Unable to logout. Please try again.'),
+                                ),
                               );
                             }
                           }
@@ -576,7 +570,7 @@ class ProfilePage extends ConsumerWidget {
         ),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary,
           ),

@@ -1,10 +1,11 @@
 // lib/presentation/widgets/home/daily_login_dialog.dart
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:confetti/confetti.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../providers/reward_provider.dart';
 
 class DailyLoginDialog extends ConsumerStatefulWidget {
@@ -39,9 +40,8 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
   Future<void> _claim() async {
     setState(() => _isClaiming = true);
 
-    final result = await ref
-        .read(rewardNotifierProvider.notifier)
-        .claimDailyLogin();
+    final result =
+        await ref.read(rewardNotifierProvider.notifier).claimDailyLogin();
 
     if (mounted) {
       if (result != null) {
@@ -55,9 +55,8 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                ref.read(rewardNotifierProvider).error ??
-                    'Already claimed today'),
+            content: Text(ref.read(rewardNotifierProvider).error ??
+                'Already claimed today'),
             backgroundColor: AppColors.warning,
           ),
         );
@@ -76,9 +75,7 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
         children: [
           Padding(
             padding: const EdgeInsets.all(28),
-            child: _claimed
-                ? _buildClaimedContent()
-                : _buildClaimContent(),
+            child: _claimed ? _buildClaimedContent() : _buildClaimContent(),
           ),
           if (_claimed)
             Positioned.fill(
@@ -145,54 +142,55 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
         ),
         const SizedBox(height: 24),
         // Streak days preview
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(7, (i) {
-            final day = i + 1;
-            final bonus = AppConstants.streakBonuses[day] ?? 5;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: Column(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: day == 7
-                          ? AppColors.gold.withOpacity(0.2)
-                          : AppColors.surfaceLight,
-                      border: Border.all(
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(7, (i) {
+              final day = i + 1;
+              final bonus = AppConstants.streakBonuses[day] ?? 5;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color: day == 7
-                            ? AppColors.gold
-                            : AppColors.border,
+                            ? AppColors.gold.withOpacity(0.2)
+                            : AppColors.surfaceLight,
+                        border: Border.all(
+                          color: day == 7 ? AppColors.gold : AppColors.border,
+                        ),
                       ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$day',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: day == 7
-                              ? AppColors.gold
-                              : AppColors.textSecondary,
+                      child: Center(
+                        child: Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: day == 7
+                                ? AppColors.gold
+                                : AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '+$bonus',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: AppColors.textHint,
+                    const SizedBox(height: 4),
+                    Text(
+                      '+$bonus',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: AppColors.textHint,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                  ],
+                ),
+              );
+            }),
+          ),
         ),
         const SizedBox(height: 28),
         // Claim button
@@ -230,7 +228,7 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
         const SizedBox(height: 12),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(
+          child: const Text(
             'Remind me later',
             style: TextStyle(color: AppColors.textSecondary),
           ),
@@ -267,7 +265,7 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
         const SizedBox(height: 20),
         Text(
           '+$_earnedCoins Coins! 🎉',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w900,
             color: AppColors.gold,

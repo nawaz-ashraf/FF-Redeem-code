@@ -19,6 +19,9 @@ class RegisterPage extends ConsumerStatefulWidget {
 }
 
 class _RegisterPageState extends ConsumerState<RegisterPage> {
+  // TODO: set to false before production — temporarily skips device uniqueness check
+  static const _skipUniquenessCheck = true;
+
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -61,17 +64,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             name: _nameCtrl.text.trim(),
             email: _emailCtrl.text.trim(),
             password: _passwordCtrl.text,
-
             referralCode: _referralCtrl.text.trim().isEmpty
                 ? null
                 : _referralCtrl.text.trim().toUpperCase(),
+            skipUniquenessCheck: _skipUniquenessCheck,
           );
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) {
+        final message = e is AppException
+            ? e.message
+            : 'Something went wrong. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(message),
             backgroundColor: AppColors.error,
           ),
         );

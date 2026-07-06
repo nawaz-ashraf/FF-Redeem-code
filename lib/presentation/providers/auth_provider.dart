@@ -55,6 +55,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     required String email,
     required String password,
     String? referralCode,
+    bool skipUniquenessCheck = false,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -63,6 +64,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
         email: email,
         password: password,
         referralCode: referralCode,
+        skipUniquenessCheck: skipUniquenessCheck,
       );
       state = AsyncValue.data(user);
     } catch (e, st) {
@@ -86,6 +88,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       state = AsyncValue.error(e, st);
       rethrow;
     }
+  }
+
+  Future<void> sendPasswordReset(String email) async {
+    await _authRepo.sendPasswordReset(email);
   }
 
   Future<void> signOut() async {
