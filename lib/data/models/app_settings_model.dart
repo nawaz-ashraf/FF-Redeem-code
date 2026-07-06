@@ -9,8 +9,19 @@ class AppSettingsModel {
   final int rewardDailyLogin;
   final int minimumRedeem;
   final bool maintenanceMode;
+
+  // --- App update fields (settings/appConfig) ---
+  /// Remote minimum version. Users below this may see an update prompt.
   final String latestVersion;
+
+  /// When true AND user is outdated, splash shows a blocking update dialog.
   final bool forceUpdate;
+
+  /// Optional changelog text shown in the update dialog.
+  final String releaseNotes;
+
+  /// Play Store link. Empty string falls back to AppConstants.defaultPlayStoreUrl.
+  final String storeUrl;
 
   const AppSettingsModel({
     required this.dailyAdLimit,
@@ -22,6 +33,8 @@ class AppSettingsModel {
     required this.maintenanceMode,
     required this.latestVersion,
     required this.forceUpdate,
+    this.releaseNotes = '',
+    this.storeUrl = '',
   });
 
   /// Default settings used when Firestore document doesn't exist
@@ -51,6 +64,8 @@ class AppSettingsModel {
       maintenanceMode: data['maintenanceMode'] ?? false,
       latestVersion: data['latestVersion'] ?? '1.0.0',
       forceUpdate: data['forceUpdate'] ?? false,
+      releaseNotes: data['releaseNotes'] ?? '',
+      storeUrl: data['storeUrl'] ?? '',
     );
   }
 
@@ -65,6 +80,8 @@ class AppSettingsModel {
       'maintenanceMode': maintenanceMode,
       'latestVersion': latestVersion,
       'forceUpdate': forceUpdate,
+      'releaseNotes': releaseNotes,
+      'storeUrl': storeUrl,
     };
   }
 
@@ -78,6 +95,8 @@ class AppSettingsModel {
     bool? maintenanceMode,
     String? latestVersion,
     bool? forceUpdate,
+    String? releaseNotes,
+    String? storeUrl,
   }) {
     return AppSettingsModel(
       dailyAdLimit: dailyAdLimit ?? this.dailyAdLimit,
@@ -89,6 +108,8 @@ class AppSettingsModel {
       maintenanceMode: maintenanceMode ?? this.maintenanceMode,
       latestVersion: latestVersion ?? this.latestVersion,
       forceUpdate: forceUpdate ?? this.forceUpdate,
+      releaseNotes: releaseNotes ?? this.releaseNotes,
+      storeUrl: storeUrl ?? this.storeUrl,
     );
   }
 }

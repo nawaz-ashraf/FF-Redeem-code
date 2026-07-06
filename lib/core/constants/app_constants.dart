@@ -7,6 +7,10 @@ class AppConstants {
   static const String appName = 'Game redeem Code';
   static const String appVersion = '1.0.0';
 
+  /// Fallback Play Store URL when Firestore storeUrl is empty.
+  static const String defaultPlayStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.nawaz.ff.ff_redeem_code';
+
   // Coin rewards
   static const int adRewardCoins = 5;
   static const int dailyLoginCoins = 5;

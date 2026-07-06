@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../providers/app_update_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common/update_dialog.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -35,7 +37,35 @@ class _SplashPageState extends ConsumerState<SplashPage>
     await Future.delayed(const Duration(milliseconds: 2800));
     if (!mounted) return;
 
+    // --- App update gate (see docs/APP_UPDATE.md) ---
+    // Fetches Firestore config, compares versions, fails open on error.
+    final updateStatus = await ref.read(appUpdateCheckProvider.future);
+    if (!mounted) return;
+
+    if (updateStatus != null && updateStatus.updateAvailable) {
+      if (updateStatus.forceUpdate) {
+        // Blocking: show dialog and stop — user cannot reach home/login.
+        if (!context.mounted) return;
+        await showUpdateDialog(context, updateStatus);
+        return;
+      }
+
+      // Optional: user may tap "Later" to continue, or "Update" to open store.
+      if (!context.mounted) return;
+      final shouldContinue = await showUpdateDialog(context, updateStatus);
+      if (!shouldContinue || !context.mounted) return;
+    }
+
+    await _continueNavigation();
+  }
+
+  /// Existing splash routing: home if logged in, else onboarding or login.
+  Future<void> _continueNavigation() async {
+    if (!mounted) return;
+
     final prefs = await SharedPreferences.getInstance();
+    if (!context.mounted) return;
+
     final isOnboardingDone =
         prefs.getBool(AppConstants.isOnboardingDoneKey) ?? false;
 
