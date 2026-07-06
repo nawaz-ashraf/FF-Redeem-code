@@ -8,7 +8,8 @@ class TermsOfServicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Terms of Service', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text('Terms of Service',
+            style: TextStyle(fontWeight: FontWeight.w800)),
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
@@ -51,7 +52,7 @@ class TermsOfServicePage extends StatelessWidget {
                   'This application complies with Google Play policies. We are not affiliated with, endorsed, or sponsored by Google or any other trademark owners mentioned within the app.'),
               _buildSectionTitle('8. Copyright Notice'),
               _buildSectionText(
-                  'All content, designs, and assets within this application are the property of FF Redeem Code. Unauthorized copying or distribution is strictly prohibited.'),
+                  'All content, designs, and assets within this application are the property of Game Redeem Code. Unauthorized copying or distribution is strictly prohibited.'),
               const SizedBox(height: 48),
             ],
           ),

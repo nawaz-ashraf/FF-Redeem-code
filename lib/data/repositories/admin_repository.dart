@@ -14,10 +14,7 @@ class AdminRepository {
     final todayTimestamp = Timestamp.fromDate(todayStart);
 
     final results = await Future.wait([
-      _firestore
-          .collection(AppConstants.usersCollection)
-          .count()
-          .get(),
+      _firestore.collection(AppConstants.usersCollection).count().get(),
       _firestore
           .collection(AppConstants.usersCollection)
           .where('createdAt', isGreaterThanOrEqualTo: todayTimestamp)
@@ -187,16 +184,16 @@ class AdminRepository {
       'rewardAmount': amount.abs(),
       'balanceBefore': currentCoins,
       'balanceAfter': currentCoins + amount,
-      'description': 'Admin adjustment: ${amount >= 0 ? "+$amount" : "$amount"} coins',
+      'description':
+          'Admin adjustment: ${amount >= 0 ? "+$amount" : "$amount"} coins',
       'createdAt': FieldValue.serverTimestamp(),
       'status': 'completed',
     });
 
-    await _logAdminAction(
-        'adjust_coins', userId, 'Amount: $amount');
+    await _logAdminAction('adjust_coins', userId, 'Amount: $amount');
   }
 
-  /// Search users by name, email, or FF UID
+  /// Search users by name, email, or Game UID
   Future<List<UserModel>> searchUsers(String query) async {
     if (query.isEmpty) return [];
 

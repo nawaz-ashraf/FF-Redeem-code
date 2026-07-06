@@ -54,6 +54,7 @@ void main() async {
   // Hive (for local storage if needed later)
   await Hive.initFlutter();
 
+  debugPrint('App Started');
   runApp(const ProviderScope(child: FFRedeemApp()));
 }
 
@@ -66,7 +67,7 @@ class FFRedeemApp extends ConsumerWidget {
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return MaterialApp.router(
-      title: 'FF Redeem Code',
+      title: 'Game Redeem Code',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       darkTheme: AppTheme.darkTheme,

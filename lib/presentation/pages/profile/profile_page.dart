@@ -9,8 +9,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/reward_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../../data/models/user_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -23,8 +26,7 @@ class ProfilePage extends ConsumerWidget {
       body: Container(
         decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
         child: userAsync.when(
-          loading: () =>
-              const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(child: Text('Error: $e')),
           data: (user) => user == null
               ? const Center(child: Text('Not logged in'))
@@ -34,9 +36,7 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfile(
-      BuildContext context, WidgetRef ref, UserModel user) {
-
+  Widget _buildProfile(BuildContext context, WidgetRef ref, UserModel user) {
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -102,17 +102,15 @@ class ProfilePage extends ConsumerWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.surface,
-                            border: Border.all(
-                                color: AppColors.primary, width: 2),
+                            border:
+                                Border.all(color: AppColors.primary, width: 2),
                           ),
                           child: const Icon(Icons.edit,
                               size: 14, color: AppColors.primary),
                         ),
                       ),
                     ],
-                  )
-                      .animate()
-                      .scale(duration: 600.ms, curve: Curves.elasticOut),
+                  ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
                   const SizedBox(height: 12),
                   Text(
                     user.name,
@@ -135,20 +133,13 @@ class ProfilePage extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildStat(
-                          '🪙', user.coins.toString(), 'Coins', context),
+                      _buildStat('🪙', user.coins.toString(), 'Coins', context),
                       _buildDivider(),
                       _buildStat(
-                          '🔥',
-                          user.dailyStreak.toString(),
-                          'Streak',
-                          context),
+                          '🔥', user.dailyStreak.toString(), 'Streak', context),
                       _buildDivider(),
-                      _buildStat(
-                          '👥',
-                          user.referralCount.toString(),
-                          'Referrals',
-                          context),
+                      _buildStat('👥', user.referralCount.toString(),
+                          'Referrals', context),
                     ],
                   ),
                 ],
@@ -226,8 +217,7 @@ class ProfilePage extends ConsumerWidget {
                                 ClipboardData(text: user.referralCode));
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content:
-                                    Text('Referral code copied! ✅'),
+                                content: Text('Referral code copied! ✅'),
                                 backgroundColor: AppColors.success,
                               ),
                             );
@@ -237,7 +227,7 @@ class ProfilePage extends ConsumerWidget {
                           icon: const Icon(Icons.share, color: Colors.white),
                           onPressed: () {
                             Share.share(
-                              'Join FF Redeem Code and earn coins! Use my referral code: ${user.referralCode}\n\nDownload the app now!',
+                              'Join Game Redeem Code and earn coins! Use my referral code: ${user.referralCode}\n\nDownload the app now!',
                             );
                           },
                         ),
@@ -280,11 +270,12 @@ class ProfilePage extends ConsumerWidget {
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 16),
-                    _buildStatRow('💰 Total Earned', '${user.totalEarnedCoins} coins'),
                     _buildStatRow(
-                        '💎 Total Redeemed', '${user.totalRedeemedCoins} coins'),
-                    _buildStatRow('📅 Member Since',
-                        AppUtils.formatDate(user.createdAt)),
+                        '💰 Total Earned', '${user.totalEarnedCoins} coins'),
+                    _buildStatRow('💎 Total Redeemed',
+                        '${user.totalRedeemedCoins} coins'),
+                    _buildStatRow(
+                        '📅 Member Since', AppUtils.formatDate(user.createdAt)),
                     _buildStatRow('✉️ Email', user.email ?? 'N/A'),
                   ],
                 ),
@@ -332,19 +323,31 @@ class ProfilePage extends ConsumerWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: AppColors.surface,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            title: const Text('Contact Support', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                            content: const Text('Choose how you would like to contact us:', style: TextStyle(color: AppColors.textSecondary)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            title: const Text('Contact Support',
+                                style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold)),
+                            content: const Text(
+                                'Choose how you would like to contact us:',
+                                style:
+                                    TextStyle(color: AppColors.textSecondary)),
                             actions: [
                               TextButton(
                                 onPressed: () {
-                                  Clipboard.setData(const ClipboardData(text: 'Gameredeemcode00@gmail.com'));
+                                  Clipboard.setData(const ClipboardData(
+                                      text: 'Gameredeemcode00@gmail.com'));
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Email copied to clipboard! ✅'), backgroundColor: AppColors.success),
+                                    const SnackBar(
+                                        content: Text(
+                                            'Email copied to clipboard! ✅'),
+                                        backgroundColor: AppColors.success),
                                   );
                                 },
-                                child: const Text('Copy Email', style: TextStyle(color: Colors.grey)),
+                                child: const Text('Copy Email',
+                                    style: TextStyle(color: Colors.grey)),
                               ),
                               ElevatedButton(
                                 onPressed: () async {
@@ -354,22 +357,31 @@ class ProfilePage extends ConsumerWidget {
                                     path: 'Gameredeemcode00@gmail.com',
                                     queryParameters: {
                                       'subject': 'Game Redeem Code Support',
-                                      'body': 'Hello, I need help regarding:\\n\\nDevice:\\nAndroid Version:\\nApp Version:\\nProblem:\\n\\nThank you.',
+                                      'body':
+                                          'Hello, I need help regarding:\\n\\nDevice:\\nAndroid Version:\\nApp Version:\\nProblem:\\n\\nThank you.',
                                     },
                                   );
                                   if (!await launchUrl(emailLaunchUri)) {
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('No email application found.'), backgroundColor: AppColors.error),
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'No email application found.'),
+                                            backgroundColor: AppColors.error),
                                       );
                                     }
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
                                 ),
-                                child: const Text('Email Support', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                child: const Text('Email Support',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -384,23 +396,34 @@ class ProfilePage extends ConsumerWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             backgroundColor: AppColors.surface,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            title: const Text('Rate App', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                            content: const Text('Thank you for using FF Redeem Code. Please rate us on Google Play.', style: TextStyle(color: AppColors.textSecondary)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            title: const Text('Rate App',
+                                style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold)),
+                            content: const Text(
+                                'Thank you for using Game Redeem Code. Please rate us on Google Play.',
+                                style:
+                                    TextStyle(color: AppColors.textSecondary)),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text('Never', style: TextStyle(color: Colors.grey)),
+                                child: const Text('Never',
+                                    style: TextStyle(color: Colors.grey)),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text('Later', style: TextStyle(color: AppColors.primary)),
+                                child: const Text('Later',
+                                    style: TextStyle(color: AppColors.primary)),
                               ),
                               ElevatedButton(
                                 onPressed: () async {
                                   Navigator.pop(context);
-                                  final url = Uri.parse('market://details?id=com.nawaz.ff.ff_redeem_code');
-                                  final webUrl = Uri.parse('https://play.google.com/store/apps/details?id=com.nawaz.ff.ff_redeem_code');
+                                  final url = Uri.parse(
+                                      'market://details?id=com.nawaz.ff.ff_redeem_code');
+                                  final webUrl = Uri.parse(
+                                      'https://play.google.com/store/apps/details?id=com.nawaz.ff.ff_redeem_code');
                                   if (await canLaunchUrl(url)) {
                                     await launchUrl(url);
                                   } else {
@@ -409,9 +432,13 @@ class ProfilePage extends ConsumerWidget {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
                                 ),
-                                child: const Text('Rate Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                child: const Text('Rate Now',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -423,7 +450,7 @@ class ProfilePage extends ConsumerWidget {
                       label: 'Share App',
                       onTap: () {
                         Share.share(
-                          'Earn free coins and redeem codes with the FF Redeem Code app! Download now: https://play.google.com/store/apps/details?id=com.nawaz.ff.ff_redeem_code',
+                          'Earn free coins and redeem codes with the Game Redeem Code app! Download now: https://play.google.com/store/apps/details?id=com.nawaz.ff.ff_redeem_code',
                         );
                       },
                     ),
@@ -442,33 +469,68 @@ class ProfilePage extends ConsumerWidget {
                           context: context,
                           builder: (_) => AlertDialog(
                             backgroundColor: AppColors.surface,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            title: const Text('Logout?', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                            content: const Text('Are you sure you want to logout from your account?', style: TextStyle(color: AppColors.textSecondary)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                            title: const Text('Logout?',
+                                style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold)),
+                            content: const Text(
+                                'Are you sure you want to logout from your account?',
+                                style:
+                                    TextStyle(color: AppColors.textSecondary)),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                                child: const Text('Cancel',
+                                    style: TextStyle(color: Colors.grey)),
                               ),
                               ElevatedButton(
                                 onPressed: () => Navigator.pop(context, true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.orange,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
                                 ),
-                                child: const Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                child: const Text('Logout',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
                         );
                         if (confirm == true) {
                           try {
-                            await ref.read(authNotifierProvider.notifier).signOut();
-                            // GoRouter automatically redirects to /login thanks to refreshListenable
+                            debugPrint('Logout Pressed');
+                            debugPrint('Calling Firebase signOut');
+                            await ref
+                                .read(authNotifierProvider.notifier)
+                                .signOut();
+                            debugPrint('Firebase SignOut Complete');
+                            debugPrint(
+                                'Current user: ${FirebaseAuth.instance.currentUser}');
+
+                            debugPrint('Invalidating providers');
+                            ref.invalidate(authStateProvider);
+                            ref.invalidate(currentUserProvider);
+                            ref.invalidate(authNotifierProvider);
+                            ref.invalidate(rewardNotifierProvider);
+                            ref.invalidate(dailyLimitsProvider);
+                            ref.invalidate(userWithdrawalsProvider);
+                            ref.invalidate(notificationsProvider);
+                            ref.invalidate(unreadNotificationCountProvider);
+
+                            debugPrint('Navigating to Login');
+                            // GoRouter automatically redirects to /login thanks to RouterNotifier
+                            // If we call context.go('/login') here while the widget tree is rebuilding,
+                            // it can cause a BuildContext exception or a silent navigation failure.
                           } catch (e) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Unable to logout. Please try again.')),
+                                const SnackBar(
+                                    content: Text(
+                                        'Unable to logout. Please try again.')),
                               );
                             }
                           }
@@ -556,7 +618,6 @@ class ProfilePage extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 class _AnimatedMenuItem extends StatefulWidget {
@@ -578,15 +639,18 @@ class _AnimatedMenuItem extends StatefulWidget {
   State<_AnimatedMenuItem> createState() => _AnimatedMenuItemState();
 }
 
-class _AnimatedMenuItemState extends State<_AnimatedMenuItem> with SingleTickerProviderStateMixin {
+class _AnimatedMenuItemState extends State<_AnimatedMenuItem>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 100));
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 100));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -610,7 +674,8 @@ class _AnimatedMenuItemState extends State<_AnimatedMenuItem> with SingleTickerP
               onTap: widget.onTap,
               borderRadius: BorderRadius.circular(12),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 leading: Icon(
                   widget.icon,
                   color: widget.color ?? AppColors.textSecondary,
@@ -628,7 +693,11 @@ class _AnimatedMenuItemState extends State<_AnimatedMenuItem> with SingleTickerP
                   Icons.arrow_forward_ios,
                   color: widget.color ?? AppColors.primary.withOpacity(0.5),
                   size: 16,
-                ).animate(onPlay: (controller) => controller.repeat(reverse: true)).moveX(begin: 0, end: 4, duration: 1.seconds),
+                )
+                    .animate(
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true))
+                    .moveX(begin: 0, end: 4, duration: 1.seconds),
               ),
             ),
           ),

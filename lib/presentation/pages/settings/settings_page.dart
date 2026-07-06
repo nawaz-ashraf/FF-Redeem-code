@@ -118,7 +118,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               subtitle: 'Invite friends to earn more coins!',
               onTap: () {
                 Share.share(
-                  'Earn free coins with FF Redeem Code app! Download now and use my referral code.',
+                  'Earn free coins with Game Redeem Code app! Download now and use my referral code.',
                 );
               },
             ),
@@ -193,7 +193,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       child: ListTile(
         onTap: onTap,
-        leading: Icon(icon, color: iconColor ?? AppColors.textSecondary, size: 22),
+        leading:
+            Icon(icon, color: iconColor ?? AppColors.textSecondary, size: 22),
         title: Text(
           title,
           style: TextStyle(
@@ -246,12 +247,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               Navigator.pop(context);
               final user = ref.read(currentUserProvider).value;
               if (user != null) {
-                await ref
-                    .read(authRepositoryProvider)
-                    .deleteAccount(user.uid);
-                await ref
-                    .read(authNotifierProvider.notifier)
-                    .signOut();
+                await ref.read(authRepositoryProvider).deleteAccount(user.uid);
+                await ref.read(authNotifierProvider.notifier).signOut();
                 if (mounted) context.go('/login');
               }
             },

@@ -42,12 +42,38 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen<AsyncValue<User?>>(
+      authStateProvider,
+      (previous, next) {
+        if (!next.isLoading && next.hasValue) {
+          if (next.value != null) {
+            debugPrint('User Logged In');
+          } else {
+            debugPrint('User Logged Out');
+          }
+        }
+        notifyListeners();
+      },
+    );
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
+  final notifier = RouterNotifier(ref);
+
   return GoRouter(
     initialLocation: '/splash',
-    refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
+    refreshListenable: notifier,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
+      
+      // Ensure we don't redirect on empty AsyncLoading states
+      if (authState.isLoading && !authState.hasValue) return null;
+
       final isLoggedIn = authState.value != null;
       final isGoingToAuth = state.matchedLocation.startsWith('/login') ||
           state.matchedLocation.startsWith('/register') ||
@@ -55,7 +81,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isGoingToSplash = state.matchedLocation == '/splash';
 
       if (isGoingToSplash) return null;
-      if (!isLoggedIn && !isGoingToAuth) return '/login';
+      if (!isLoggedIn && !isGoingToAuth) {
+        debugPrint('Navigating To Login');
+        return '/login';
+      }
       if (isLoggedIn && isGoingToAuth) return '/home';
       return null;
     },

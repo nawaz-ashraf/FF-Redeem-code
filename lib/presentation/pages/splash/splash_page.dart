@@ -22,6 +22,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
   @override
   void initState() {
     super.initState();
+    debugPrint('Splash Loaded');
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),

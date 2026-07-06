@@ -4,7 +4,7 @@ import 'dart:io';
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'FF Redeem Code';
+  static const String appName = 'Game redeem Code';
   static const String appVersion = '1.0.0';
 
   // Coin rewards
@@ -80,7 +80,7 @@ class AppConstants {
 
   // Notification channels
   static const String notificationChannelId = 'ff_redeem_channel';
-  static const String notificationChannelName = 'FF Redeem Notifications';
+  static const String notificationChannelName = 'Game Redeem Notifications';
   static const String notificationChannelDescription =
       'Notifications for rewards, redeem status, and announcements';
 

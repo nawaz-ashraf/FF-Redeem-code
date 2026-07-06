@@ -24,6 +24,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    debugPrint('Login Screen Loaded');
+  }
+
+  @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -227,9 +233,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ],
                     ),
-                  )
-                      .animate(delay: 700.ms)
-                      .fade(duration: 400.ms),
+                  ).animate(delay: 700.ms).fade(duration: 400.ms),
                   const SizedBox(height: 20),
                   Center(
                     child: Text(

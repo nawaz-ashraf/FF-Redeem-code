@@ -8,7 +8,8 @@ class PrivacyPolicyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacy Policy', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text('Privacy Policy',
+            style: TextStyle(fontWeight: FontWeight.w800)),
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
@@ -33,7 +34,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   'We collect information to provide better services to our users. This includes basic account info like your name and email address, as well as usage data such as ads watched and rewards claimed.'),
               _buildSectionTitle('2. How We Use Your Information'),
               _buildSectionText(
-                  'Your information is used solely for the operation of the FF Redeem Code app. We use it to track your coin balance, process redemption requests, and ensure the security of our platform.'),
+                  'Your information is used solely for the operation of the Game Redeem Code app. We use it to track your coin balance, process redemption requests, and ensure the security of our platform.'),
               _buildSectionTitle('3. Data Security'),
               _buildSectionText(
                   'We implement industry-standard security measures, including Firebase Authentication, to protect your data from unauthorized access or alteration.'),

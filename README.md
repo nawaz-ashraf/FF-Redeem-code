@@ -1,4 +1,4 @@
-# FF Redeem Code
+# Game redeem Code
 
 A complete Flutter application for earning coins through games, ads, and referrals, and redeeming them for Free Fire diamonds or Google Play redeem codes.
 
