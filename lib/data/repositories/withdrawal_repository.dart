@@ -5,11 +5,22 @@ import '../../core/errors/app_exception.dart';
 import '../../core/services/firebase_service.dart';
 import '../models/withdrawal_model.dart';
 import '../models/redeem_code_model.dart';
+import '../models/notification_model.dart';
 import 'user_repository.dart';
+import 'notification_repository.dart';
 
 class WithdrawalRepository {
-  final _firestore = FirebaseService.firestore;
-  final _userRepo = UserRepository();
+  final FirebaseFirestore _firestore;
+  final UserRepository _userRepo;
+  final NotificationRepository _notificationRepo;
+
+  WithdrawalRepository({
+    FirebaseFirestore? firestore,
+    UserRepository? userRepo,
+    NotificationRepository? notificationRepo,
+  })  : _firestore = firestore ?? FirebaseService.firestore,
+        _userRepo = userRepo ?? UserRepository(),
+        _notificationRepo = notificationRepo ?? NotificationRepository();
 
   /// Submit a new withdrawal/redeem request
   Future<WithdrawalModel> submitWithdrawal({
@@ -87,34 +98,38 @@ class WithdrawalRepository {
     return _firestore
         .collection(AppConstants.withdrawalsCollection)
         .where('userId', isEqualTo: userId)
-        .orderBy('requestedAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => WithdrawalModel.fromFirestore(d)).toList());
+        .map((snap) {
+          final list = snap.docs.map((d) => WithdrawalModel.fromFirestore(d)).toList();
+          list.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+          return list;
+        });
   }
 
   /// Stream all withdrawals filtered by status (admin use)
   Stream<List<WithdrawalModel>> watchAllWithdrawals({String? status}) {
-    Query query = _firestore
-        .collection(AppConstants.withdrawalsCollection);
-
-    if (status != null) {
-      query = query.where('status', isEqualTo: status);
-    }
-
-    return query
-        .orderBy('requestedAt', descending: true)
+    return _firestore
+        .collection(AppConstants.withdrawalsCollection)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => WithdrawalModel.fromFirestore(d)).toList());
+        .map((snap) {
+          var list = snap.docs.map((d) => WithdrawalModel.fromFirestore(d)).toList();
+          if (status != null) {
+            list = list.where((w) => w.status.name == status.toLowerCase()).toList();
+          }
+          list.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+          return list;
+        });
   }
 
   /// Approve a withdrawal: assign redeem code, deduct coins, update statuses
   Future<void> approveWithdrawal({
     required String withdrawalId,
-    required String redeemCode,
+    String? redeemCode,
     String? adminRemark,
   }) async {
+    String? finalAssignedCode;
+    String targetUserId = '';
+    
     await _firestore.runTransaction((tx) async {
       // 1. Read the withdrawal
       final withdrawalRef = _firestore
@@ -149,7 +164,31 @@ class WithdrawalRepository {
             message: 'User has insufficient coins.');
       }
 
-      // 3. Deduct coins from user
+      // 3. Find code if not provided
+      String? codeToAssign = redeemCode;
+      DocumentReference? codeRefToAssign;
+
+      if (codeToAssign == null || codeToAssign.isEmpty) {
+        final codeQuery = await _firestore
+            .collection(AppConstants.redeemCodesCollection)
+            .where('package', isEqualTo: withdrawal.package)
+            .where('status', isEqualTo: 'available')
+            .limit(1)
+            .get();
+
+        if (codeQuery.docs.isEmpty) {
+          throw const ValidationException(
+              message: 'No available redeem codes for this package.');
+        }
+
+        codeToAssign = codeQuery.docs.first.data()['code'];
+        codeRefToAssign = codeQuery.docs.first.reference;
+      }
+      
+      finalAssignedCode = codeToAssign;
+      targetUserId = withdrawal.userId;
+
+      // 4. Deduct coins from user
       tx.update(userRef, {
         'coins': FieldValue.increment(-withdrawal.coinCost),
         'totalRedeemedCoins': FieldValue.increment(withdrawal.coinCost),
@@ -157,16 +196,16 @@ class WithdrawalRepository {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // 4. Update withdrawal status
+      // 5. Update withdrawal status
       tx.update(withdrawalRef, {
         'status': 'approved',
-        'assignedRedeemCode': redeemCode,
+        'assignedRedeemCode': codeToAssign,
         'adminRemark': adminRemark,
         'approvedAt': FieldValue.serverTimestamp(),
         'completedAt': FieldValue.serverTimestamp(),
       });
 
-      // 5. Log approval transaction
+      // 6. Log approval transaction
       final txRef = _firestore
           .collection(AppConstants.transactionsCollection)
           .doc();
@@ -183,21 +222,39 @@ class WithdrawalRepository {
         'status': 'completed',
       });
 
-      // 6. Mark redeem code as assigned (if it exists in redeemCodes collection)
-      final codeQuery = await _firestore
-          .collection(AppConstants.redeemCodesCollection)
-          .where('code', isEqualTo: redeemCode)
-          .limit(1)
-          .get();
-
-      if (codeQuery.docs.isNotEmpty) {
-        tx.update(codeQuery.docs.first.reference, {
+      // 7. Mark redeem code as assigned
+      if (codeRefToAssign != null) {
+        tx.update(codeRefToAssign, {
           'status': 'assigned',
           'assignedUser': withdrawal.userId,
           'assignedDate': FieldValue.serverTimestamp(),
         });
+      } else if (codeToAssign != null && codeToAssign.isNotEmpty) {
+        final codeQuery = await _firestore
+            .collection(AppConstants.redeemCodesCollection)
+            .where('code', isEqualTo: codeToAssign)
+            .limit(1)
+            .get();
+
+        if (codeQuery.docs.isNotEmpty) {
+          tx.update(codeQuery.docs.first.reference, {
+            'status': 'assigned',
+            'assignedUser': withdrawal.userId,
+            'assignedDate': FieldValue.serverTimestamp(),
+          });
+        }
       }
     });
+
+    // 8. Send Push Notification
+    if (targetUserId.isNotEmpty) {
+      await _notificationRepo.createNotification(
+        title: 'Congratulations!',
+        message: 'Your withdrawal request was approved. You received a redeem code!',
+        type: NotificationType.redeemApproved,
+        targetUserId: targetUserId,
+      );
+    }
   }
 
   /// Reject a withdrawal — coins remain unchanged
@@ -234,6 +291,49 @@ class WithdrawalRepository {
           'Redeem rejected: ${withdrawal.package}${adminRemark != null ? " - $adminRemark" : ""}',
       'createdAt': FieldValue.serverTimestamp(),
       'status': 'completed',
+    });
+    
+    // Send Push Notification
+    await _notificationRepo.createNotification(
+      title: 'Redemption Rejected',
+      message: 'Unfortunately your redemption request was rejected.${adminRemark != null ? " Reason: $adminRemark" : ""}',
+      type: NotificationType.redeemRejected,
+      targetUserId: withdrawal.userId,
+    );
+  }
+
+  /// Mark a redeem code as used by the user
+  Future<void> markAsUsed({
+    required String withdrawalId,
+    required String redeemCode,
+  }) async {
+    await _firestore.runTransaction((tx) async {
+      // 1. Update withdrawal
+      final withdrawalRef = _firestore
+          .collection(AppConstants.withdrawalsCollection)
+          .doc(withdrawalId);
+      final withdrawalDoc = await tx.get(withdrawalRef);
+
+      if (!withdrawalDoc.exists) {
+        throw const FirestoreException(message: 'Withdrawal not found.');
+      }
+
+      tx.update(withdrawalRef, {
+        'completedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Update redeem code status to 'used'
+      final codeQuery = await _firestore
+          .collection(AppConstants.redeemCodesCollection)
+          .where('code', isEqualTo: redeemCode)
+          .limit(1)
+          .get();
+
+      if (codeQuery.docs.isNotEmpty) {
+        tx.update(codeQuery.docs.first.reference, {
+          'status': 'used',
+        });
+      }
     });
   }
 }

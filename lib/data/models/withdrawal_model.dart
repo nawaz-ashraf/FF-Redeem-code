@@ -16,7 +16,8 @@ extension WithdrawalStatusExt on WithdrawalStatus {
   }
 
   static WithdrawalStatus fromString(String? value) {
-    switch (value) {
+    if (value == null) return WithdrawalStatus.pending;
+    switch (value.toLowerCase()) {
       case 'approved':
         return WithdrawalStatus.approved;
       case 'rejected':
@@ -83,7 +84,7 @@ class WithdrawalModel {
       'package': package,
       'coinCost': coinCost,
       'packageValue': packageValue,
-      'status': status.name,
+      'status': status.name.toLowerCase(),
       'assignedRedeemCode': assignedRedeemCode,
       'adminRemark': adminRemark,
       'requestedAt': FieldValue.serverTimestamp(),

@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../providers/reward_provider.dart';
-import '../../../data/models/withdrawal_model.dart';
+import '../../../data/models/app_settings_model.dart';
 import '../../../data/repositories/withdrawal_repository.dart';
 
 class RedeemPage extends ConsumerStatefulWidget {
@@ -17,37 +18,10 @@ class RedeemPage extends ConsumerStatefulWidget {
 }
 
 class _RedeemPageState extends ConsumerState<RedeemPage> {
-  final List<_RedeemPackage> _packages = [
-    _RedeemPackage(
-      name: '₹100 Reward Code',
-      coins: 2500,
-      value: '₹100',
-      emoji: '💎',
-      gradient: AppColors.blueGradient,
-      popular: false,
-    ),
-    _RedeemPackage(
-      name: '₹200 Reward Code',
-      coins: 5000,
-      value: '₹200',
-      emoji: '💎💎',
-      gradient: AppColors.purpleGradient,
-      popular: true,
-    ),
-    _RedeemPackage(
-      name: '₹400 Reward Code',
-      coins: 10000,
-      value: '₹400',
-      emoji: '💎💎💎',
-      gradient: AppColors.goldGradient,
-      popular: false,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
-    final withdrawals = ref.watch(userWithdrawalsProvider);
+    final settingsAsync = ref.watch(appSettingsProvider);
 
     return Scaffold(
       body: Container(
@@ -71,7 +45,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Coin balance
                       userAsync.when(
@@ -82,6 +56,12 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                         error: (_, __) => const SizedBox(),
                       ),
                       const SizedBox(height: 20),
+                      
+                      // History Button
+                      _buildHistoryButton(context),
+                      
+                      const SizedBox(height: 20),
+                      
                       // Disclaimer
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -117,52 +97,35 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                             ),
                       ),
                       const SizedBox(height: 16),
-                      ...List.generate(
-                        _packages.length,
-                        (i) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _RedeemPackageCard(
-                            package: _packages[i],
-                            userCoins: userAsync.value?.coins ?? 0,
-                            onRedeem: () => _showConfirmDialog(
-                              context,
-                              _packages[i],
-                              userAsync.value?.uid ?? '',
-                            ),
-                          )
-                              .animate(delay: (i * 100).ms)
-                              .slideX(begin: 0.3, duration: 400.ms)
-                              .fade(duration: 400.ms),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-                      // Request History
-                      Text(
-                        'My Requests',
-                        style:
-                            Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                      ),
-                      const SizedBox(height: 12),
-                      withdrawals.when(
-                        data: (list) => list.isEmpty
-                            ? _buildEmptyRequests()
-                            : Column(
-                                children: list
-                                    .map((w) => _WithdrawalCard(
-                                        withdrawal: w))
-                                    .toList(),
+                      settingsAsync.when(
+                        data: (settings) {
+                          final packages = settings.redeemPackages;
+                          if (packages.isEmpty) {
+                            return const Center(child: Text('No packages available'));
+                          }
+                          return Column(
+                            children: List.generate(
+                              packages.length,
+                              (i) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _RedeemPackageCard(
+                                  package: packages[i],
+                                  userCoins: userAsync.value?.coins ?? 0,
+                                  onRedeem: () => _showConfirmDialog(
+                                    context,
+                                    packages[i],
+                                    userAsync.value?.uid ?? '',
+                                  ),
+                                )
+                                    .animate(delay: (i * 100).ms)
+                                    .slideX(begin: 0.3, duration: 400.ms)
+                                    .fade(duration: 400.ms),
                               ),
-                        loading: () => const CircularProgressIndicator(),
-                        error: (e, _) {
-                          debugPrint('Withdrawals Error: $e');
-                          return const Text(
-                            'Could not load request history. Please try again later.',
-                            style: TextStyle(color: AppColors.textSecondary),
+                            ),
                           );
                         },
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (e, _) => Center(child: Text('Error: $e')),
                       ),
                     ],
                   ),
@@ -216,28 +179,37 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
     );
   }
 
-  Widget _buildEmptyRequests() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Center(
-        child: Column(
+  Widget _buildHistoryButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/redemption-history'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
           children: [
-            const Text('📭', style: TextStyle(fontSize: 40)),
-            const SizedBox(height: 12),
-            Text(
-              'No requests yet',
-              style: Theme.of(context).textTheme.titleMedium,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.history, color: AppColors.primary, size: 20),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Submit a redeem request above',
-              style: Theme.of(context).textTheme.bodySmall,
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Text(
+                'Redemption History',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
             ),
+            const Icon(Icons.chevron_right, color: AppColors.textHint),
           ],
         ),
       ),
@@ -246,7 +218,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
 
   void _showConfirmDialog(
     BuildContext context,
-    _RedeemPackage package,
+    RedeemPackageModel package,
     String userId,
   ) {
     final uidController = TextEditingController();
@@ -338,7 +310,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
   }
 
   Future<void> _submitRequest(
-      _RedeemPackage package, String userId, String ffUid) async {
+      RedeemPackageModel package, String userId, String ffUid) async {
     try {
       final repo = ref.read(withdrawalRepositoryProvider);
       await repo.submitWithdrawal(
@@ -356,6 +328,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
             backgroundColor: AppColors.success,
           ),
         );
+        context.push('/redemption-history');
       }
     } catch (e) {
       if (mounted) {
@@ -370,26 +343,8 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
   }
 }
 
-class _RedeemPackage {
-  final String name;
-  final int coins;
-  final String value;
-  final String emoji;
-  final LinearGradient gradient;
-  final bool popular;
-
-  const _RedeemPackage({
-    required this.name,
-    required this.coins,
-    required this.value,
-    required this.emoji,
-    required this.gradient,
-    required this.popular,
-  });
-}
-
 class _RedeemPackageCard extends StatelessWidget {
-  final _RedeemPackage package;
+  final RedeemPackageModel package;
   final int userCoins;
   final VoidCallback onRedeem;
 
@@ -399,20 +354,33 @@ class _RedeemPackageCard extends StatelessWidget {
     required this.onRedeem,
   });
 
+  LinearGradient _getGradient() {
+    switch (package.gradientColors.toLowerCase()) {
+      case 'purple':
+        return AppColors.purpleGradient;
+      case 'gold':
+        return AppColors.goldGradient;
+      case 'blue':
+      default:
+        return AppColors.blueGradient;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final canAfford = userCoins >= package.coins;
+    final gradient = _getGradient();
 
     return Stack(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
-            gradient: package.gradient,
+            gradient: gradient,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: package.gradient.colors.first.withOpacity(0.3),
+                color: gradient.colors.first.withOpacity(0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -468,7 +436,7 @@ class _RedeemPackageCard extends StatelessWidget {
                 onPressed: canAfford ? onRedeem : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: package.gradient.colors.first,
+                  foregroundColor: gradient.colors.first,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -512,150 +480,6 @@ class _RedeemPackageCard extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _WithdrawalCard extends StatelessWidget {
-  final WithdrawalModel withdrawal;
-
-  const _WithdrawalCard({required this.withdrawal});
-
-  @override
-  Widget build(BuildContext context) {
-    Color statusColor;
-    String statusEmoji;
-    switch (withdrawal.status) {
-      case WithdrawalStatus.approved:
-        statusColor = AppColors.success;
-        statusEmoji = '✅';
-        break;
-      case WithdrawalStatus.rejected:
-        statusColor = AppColors.error;
-        statusEmoji = '❌';
-        break;
-      default:
-        statusColor = AppColors.warning;
-        statusEmoji = '⏳';
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: statusColor.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(statusEmoji, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  withdrawal.package,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  withdrawal.status.label,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                '${withdrawal.coinCost} coins',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-              const Spacer(),
-              Text(
-                withdrawal.requestedAt.toLocal().toString().substring(0, 10),
-                style: TextStyle(color: AppColors.textHint, fontSize: 12),
-              ),
-            ],
-          ),
-          if (withdrawal.status == WithdrawalStatus.approved &&
-              withdrawal.assignedRedeemCode != null) ...[
-            const SizedBox(height: 12),
-            const Divider(color: AppColors.divider),
-            const SizedBox(height: 8),
-            Text(
-              '🎁 Your Reward Code:',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.goldGradient,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      withdrawal.assignedRedeemCode!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.copy, color: AppColors.primary),
-                  onPressed: () {
-                    // Copy to clipboard
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Code copied! ✅')),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
-          if (withdrawal.adminRemark != null &&
-              withdrawal.adminRemark!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              '📝 ${withdrawal.adminRemark}',
-              style: TextStyle(
-                color: AppColors.textHint,
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

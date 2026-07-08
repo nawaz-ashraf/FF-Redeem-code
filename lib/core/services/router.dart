@@ -11,6 +11,7 @@ import '../../presentation/pages/home/main_shell.dart';
 import '../../presentation/pages/home/home_page.dart';
 import '../../presentation/pages/redeem/redeem_page.dart';
 import '../../presentation/pages/history/history_page.dart';
+import '../../presentation/pages/history/redemption_history_page.dart';
 import '../../presentation/pages/profile/profile_page.dart';
 import '../../presentation/pages/profile/privacy_policy_page.dart';
 import '../../presentation/pages/profile/terms_page.dart';
@@ -128,6 +129,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/history',
             builder: (context, state) => const HistoryPage(),
+          ),
+          GoRoute(
+            path: '/redemption-history',
+            builder: (context, state) => const RedemptionHistoryPage(),
           ),
           GoRoute(
             path: '/profile',

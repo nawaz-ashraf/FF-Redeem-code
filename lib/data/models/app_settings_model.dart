@@ -1,6 +1,46 @@
 // lib/data/models/app_settings_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+class RedeemPackageModel {
+  final String name;
+  final int coins;
+  final String value;
+  final String emoji;
+  final String gradientColors; // e.g., "blue", "purple", "gold"
+  final bool popular;
+
+  const RedeemPackageModel({
+    required this.name,
+    required this.coins,
+    required this.value,
+    required this.emoji,
+    required this.gradientColors,
+    required this.popular,
+  });
+
+  factory RedeemPackageModel.fromMap(Map<String, dynamic> map) {
+    return RedeemPackageModel(
+      name: map['name'] ?? '',
+      coins: (map['coins'] ?? 0).toInt(),
+      value: map['value'] ?? '',
+      emoji: map['emoji'] ?? '💎',
+      gradientColors: map['gradientColors'] ?? 'blue',
+      popular: map['popular'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'coins': coins,
+      'value': value,
+      'emoji': emoji,
+      'gradientColors': gradientColors,
+      'popular': popular,
+    };
+  }
+}
+
 class AppSettingsModel {
   final int dailyAdLimit;
   final int dailyScratchLimit;
@@ -9,6 +49,7 @@ class AppSettingsModel {
   final int rewardDailyLogin;
   final int minimumRedeem;
   final bool maintenanceMode;
+  final List<RedeemPackageModel> redeemPackages;
 
   // --- App update fields (settings/appConfig) ---
   /// Remote minimum version. Users below this may see an update prompt.
@@ -31,6 +72,7 @@ class AppSettingsModel {
     required this.rewardDailyLogin,
     required this.minimumRedeem,
     required this.maintenanceMode,
+    required this.redeemPackages,
     required this.latestVersion,
     required this.forceUpdate,
     this.releaseNotes = '',
@@ -47,6 +89,32 @@ class AppSettingsModel {
       rewardDailyLogin: 5,
       minimumRedeem: 2500,
       maintenanceMode: false,
+      redeemPackages: [
+        RedeemPackageModel(
+          name: '₹100 Reward Code',
+          coins: 2500,
+          value: '₹100',
+          emoji: '💎',
+          gradientColors: 'blue',
+          popular: false,
+        ),
+        RedeemPackageModel(
+          name: '₹200 Reward Code',
+          coins: 5000,
+          value: '₹200',
+          emoji: '💎💎',
+          gradientColors: 'purple',
+          popular: true,
+        ),
+        RedeemPackageModel(
+          name: '₹400 Reward Code',
+          coins: 10000,
+          value: '₹400',
+          emoji: '💎💎💎',
+          gradientColors: 'gold',
+          popular: false,
+        ),
+      ],
       latestVersion: '1.0.0',
       forceUpdate: false,
     );
@@ -54,6 +122,16 @@ class AppSettingsModel {
 
   factory AppSettingsModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
+    List<RedeemPackageModel> parsedPackages = [];
+    if (data['redeemPackages'] != null) {
+      parsedPackages = (data['redeemPackages'] as List)
+          .map((e) => RedeemPackageModel.fromMap(e as Map<String, dynamic>))
+          .toList();
+    } else {
+      parsedPackages = AppSettingsModel.defaults().redeemPackages;
+    }
+
     return AppSettingsModel(
       dailyAdLimit: (data['dailyAdLimit'] ?? 30).toInt(),
       dailyScratchLimit: (data['dailyScratchLimit'] ?? 2).toInt(),
@@ -62,6 +140,7 @@ class AppSettingsModel {
       rewardDailyLogin: (data['rewardDailyLogin'] ?? 5).toInt(),
       minimumRedeem: (data['minimumRedeem'] ?? 2500).toInt(),
       maintenanceMode: data['maintenanceMode'] ?? false,
+      redeemPackages: parsedPackages,
       latestVersion: data['latestVersion'] ?? '1.0.0',
       forceUpdate: data['forceUpdate'] ?? false,
       releaseNotes: data['releaseNotes'] ?? '',
@@ -78,6 +157,7 @@ class AppSettingsModel {
       'rewardDailyLogin': rewardDailyLogin,
       'minimumRedeem': minimumRedeem,
       'maintenanceMode': maintenanceMode,
+      'redeemPackages': redeemPackages.map((e) => e.toMap()).toList(),
       'latestVersion': latestVersion,
       'forceUpdate': forceUpdate,
       'releaseNotes': releaseNotes,
@@ -93,6 +173,7 @@ class AppSettingsModel {
     int? rewardDailyLogin,
     int? minimumRedeem,
     bool? maintenanceMode,
+    List<RedeemPackageModel>? redeemPackages,
     String? latestVersion,
     bool? forceUpdate,
     String? releaseNotes,
@@ -106,6 +187,7 @@ class AppSettingsModel {
       rewardDailyLogin: rewardDailyLogin ?? this.rewardDailyLogin,
       minimumRedeem: minimumRedeem ?? this.minimumRedeem,
       maintenanceMode: maintenanceMode ?? this.maintenanceMode,
+      redeemPackages: redeemPackages ?? this.redeemPackages,
       latestVersion: latestVersion ?? this.latestVersion,
       forceUpdate: forceUpdate ?? this.forceUpdate,
       releaseNotes: releaseNotes ?? this.releaseNotes,

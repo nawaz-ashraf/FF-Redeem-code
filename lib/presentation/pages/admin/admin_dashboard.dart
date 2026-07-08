@@ -644,8 +644,8 @@ class _AdminWithdrawalCard extends ConsumerWidget {
             TextField(
               controller: codeCtrl,
               decoration: const InputDecoration(
-                labelText: 'Redeem Code *',
-                hintText: 'Enter the redeem code',
+                labelText: 'Redeem Code (Optional)',
+                hintText: 'Leave empty to auto-assign available code',
               ),
             ),
             const SizedBox(height: 12),
@@ -664,11 +664,10 @@ class _AdminWithdrawalCard extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (codeCtrl.text.isEmpty) return;
               try {
                 await ref.read(withdrawalRepositoryProvider).approveWithdrawal(
                       withdrawalId: w.withdrawalId,
-                      redeemCode: codeCtrl.text.trim(),
+                      redeemCode: codeCtrl.text.trim().isEmpty ? null : codeCtrl.text.trim(),
                       adminRemark: notesCtrl.text.isEmpty
                           ? null
                           : notesCtrl.text,
