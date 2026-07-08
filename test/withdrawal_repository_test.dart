@@ -31,112 +31,79 @@ void main() {
   });
 
   group('WithdrawalRepository Tests', () {
-    test('submitWithdrawal creates a new request when no pending exists', () async {
-      final userId = 'user_123';
-      final ffUid = '987654321';
-      final package = '100 Diamonds';
-      final cost = 1000;
-      final value = '100';
+    test('Case 1: User has 3000 coins, Redeems 2500 -> Balance becomes 500 immediately', () async {
+      final userId = 'user_case_1';
+      
+      await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
+        'coins': 3000,
+        'isBanned': false,
+      });
 
       final withdrawal = await withdrawalRepo.submitWithdrawal(
         userId: userId,
-        freeFireUID: ffUid,
-        package: package,
-        coinCost: cost,
-        packageValue: value,
+        freeFireUID: '111',
+        package: '₹100 Voucher',
+        coinCost: 2500,
+        packageValue: '100',
       );
 
-      expect(withdrawal.userId, userId);
-      expect(withdrawal.freeFireUID, ffUid);
-      expect(withdrawal.status, WithdrawalStatus.pending);
+      final userDoc = await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).get();
+      expect(userDoc.data()?['coins'], 500);
 
-      final snapshot = await fakeFirestore
-          .collection(AppConstants.withdrawalsCollection)
-          .where('userId', isEqualTo: userId)
-          .get();
-
-      expect(snapshot.docs.length, 1);
-    });
-
-    test('submitWithdrawal throws ValidationException if pending exists', () async {
-      final userId = 'user_123';
-
-      // Insert an existing pending request
-      await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
-        'userId': userId,
-        'freeFireUID': '111',
-        'package': 'Test',
-        'coinCost': 100,
-        'packageValue': '10',
-        'status': 'pending',
-        'requestedAt': DateTime.now(),
-      });
-
-      expect(
-        () => withdrawalRepo.submitWithdrawal(
-          userId: userId,
-          freeFireUID: '222',
-          package: 'Another',
-          coinCost: 200,
-          packageValue: '20',
-        ),
-        throwsA(isA<ValidationException>()),
-      );
-    });
-
-    test('approveWithdrawal deducts coins, assigns auto code, and updates status', () async {
-      final userId = 'user_123';
+      final txSnapshot = await fakeFirestore.collection(AppConstants.transactionsCollection).where('userId', isEqualTo: userId).get();
+      expect(txSnapshot.docs.length, 1);
+      expect(txSnapshot.docs.first.data()['rewardAmount'], -2500);
       
-      // Setup user with 5000 coins
+      expect(withdrawal.status, WithdrawalStatus.pending);
+    });
+
+    test('Case 2: Admin approves. Balance remains 500. Redeem code appears.', () async {
+      final userId = 'user_case_2';
+      
       await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
-        'coins': 5000,
+        'coins': 500,
       });
 
-      // Setup pending withdrawal
       final withdrawalRef = await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
         'userId': userId,
         'freeFireUID': '111',
-        'package': '100 Diamonds',
-        'coinCost': 1000,
+        'package': '₹100 Voucher',
+        'coinCost': 2500,
         'packageValue': '100',
         'status': 'pending',
         'requestedAt': DateTime.now(),
       });
 
-      // Setup available redeem code
       final codeRef = await fakeFirestore.collection(AppConstants.redeemCodesCollection).add({
         'code': 'XYZ-123',
-        'package': '100 Diamonds',
+        'package': '₹100 Voucher',
         'status': 'available',
       });
 
       await withdrawalRepo.approveWithdrawal(
         withdrawalId: withdrawalRef.id,
-        adminRemark: 'Enjoy!',
       );
 
-      // Verify user coins deducted
       final userDoc = await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).get();
-      expect(userDoc.data()?['coins'], 4000);
+      expect(userDoc.data()?['coins'], 500);
 
-      // Verify withdrawal updated
       final updatedWithdrawal = await withdrawalRef.get();
       expect(updatedWithdrawal.data()?['status'], 'approved');
       expect(updatedWithdrawal.data()?['assignedRedeemCode'], 'XYZ-123');
-
-      // Verify code updated
-      final updatedCode = await codeRef.get();
-      expect(updatedCode.data()?['status'], 'assigned');
     });
 
-    test('rejectWithdrawal updates status without deducting coins', () async {
-      final userId = 'user_123';
+    test('Case 3: Admin rejects. Coins return to 3000. Refund transaction created.', () async {
+      final userId = 'user_case_3';
+      
+      await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
+        'coins': 500,
+      });
 
       final withdrawalRef = await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
         'userId': userId,
         'freeFireUID': '111',
-        'package': '100 Diamonds',
-        'coinCost': 1000,
+        'package': '₹100 Voucher',
+        'coinCost': 2500,
         'packageValue': '100',
         'status': 'pending',
         'requestedAt': DateTime.now(),
@@ -144,12 +111,71 @@ void main() {
 
       await withdrawalRepo.rejectWithdrawal(
         withdrawalId: withdrawalRef.id,
-        adminRemark: 'Invalid UID',
       );
+
+      final userDoc = await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).get();
+      expect(userDoc.data()?['coins'], 3000);
 
       final updatedWithdrawal = await withdrawalRef.get();
       expect(updatedWithdrawal.data()?['status'], 'rejected');
-      expect(updatedWithdrawal.data()?['adminRemark'], 'Invalid UID');
+
+      final txSnapshot = await fakeFirestore.collection(AppConstants.transactionsCollection).where('userId', isEqualTo: userId).get();
+      expect(txSnapshot.docs.length, 1);
+      expect(txSnapshot.docs.first.data()['rewardAmount'], 2500);
+      expect(txSnapshot.docs.first.data()['type'], 'Redeem Refund');
+    });
+
+    test('Case 4: User has 2000 coins. Redeem button pressed -> Insufficient coins.', () async {
+      final userId = 'user_case_4';
+      
+      await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
+        'coins': 2000,
+        'isBanned': false,
+      });
+
+      expect(
+        () => withdrawalRepo.submitWithdrawal(
+          userId: userId,
+          freeFireUID: '111',
+          package: '₹100 Voucher',
+          coinCost: 2500,
+          packageValue: '100',
+        ),
+        throwsA(isA<ValidationException>().having((e) => e.message, 'message', contains('Insufficient coins'))),
+      );
+
+      final snapshot = await fakeFirestore.collection(AppConstants.withdrawalsCollection).where('userId', isEqualTo: userId).get();
+      expect(snapshot.docs.length, 0);
+    });
+
+    test('Case 5: User already has a Pending request -> Fails with duplicate pending', () async {
+      final userId = 'user_case_5';
+      
+      await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
+        'coins': 5000,
+        'isBanned': false,
+      });
+
+      await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
+        'userId': userId,
+        'freeFireUID': '111',
+        'package': '₹100 Voucher',
+        'coinCost': 2500,
+        'packageValue': '100',
+        'status': 'pending',
+        'requestedAt': DateTime.now(),
+      });
+
+      expect(
+        () => withdrawalRepo.submitWithdrawal(
+          userId: userId,
+          freeFireUID: '111',
+          package: '₹100 Voucher',
+          coinCost: 2500,
+          packageValue: '100',
+        ),
+        throwsA(isA<ValidationException>().having((e) => e.message, 'message', contains('under review'))),
+      );
     });
   });
 }

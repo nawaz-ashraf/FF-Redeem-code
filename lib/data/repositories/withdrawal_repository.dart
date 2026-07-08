@@ -22,7 +22,6 @@ class WithdrawalRepository {
         _userRepo = userRepo ?? UserRepository(),
         _notificationRepo = notificationRepo ?? NotificationRepository();
 
-  /// Submit a new withdrawal/redeem request
   Future<WithdrawalModel> submitWithdrawal({
     required String userId,
     required String freeFireUID,
@@ -30,17 +29,7 @@ class WithdrawalRepository {
     required int coinCost,
     required String packageValue,
   }) async {
-    // Validate user exists and has enough coins
-    final user = await _userRepo.getUser(userId);
-    if (user == null) throw const AuthException(message: 'User not found.');
-
-    if (user.coins < coinCost) {
-      throw const ValidationException(
-        message: 'Insufficient coins for this redemption.',
-      );
-    }
-
-    // Check for existing pending request (only 1 allowed at a time)
+    // 1. Check for existing pending request OUTSIDE transaction
     final existingPending = await _firestore
         .collection(AppConstants.withdrawalsCollection)
         .where('userId', isEqualTo: userId)
@@ -50,39 +39,68 @@ class WithdrawalRepository {
 
     if (existingPending.docs.isNotEmpty) {
       throw const ValidationException(
-        message:
-            'You already have a pending request. Please wait for it to be processed.',
+        message: 'You already have a redemption request under review.',
       );
     }
 
-    final docRef =
-        _firestore.collection(AppConstants.withdrawalsCollection).doc();
+    WithdrawalModel? withdrawal;
 
-    final withdrawal = WithdrawalModel(
-      withdrawalId: docRef.id,
-      userId: userId,
-      freeFireUID: freeFireUID,
-      package: package,
-      coinCost: coinCost,
-      packageValue: packageValue,
-      status: WithdrawalStatus.pending,
-      requestedAt: DateTime.now(),
-    );
+    await _firestore.runTransaction((tx) async {
+      // 2. READS
+      final userRef = _firestore.collection(AppConstants.usersCollection).doc(userId);
+      final userDoc = await tx.get(userRef);
 
-    await docRef.set(withdrawal.toFirestore());
+      if (!userDoc.exists) throw const AuthException(message: 'User not found.');
 
-    // Log redeem request transaction
-    final currentCoins = user.coins;
-    await _firestore.collection(AppConstants.transactionsCollection).add({
-      'userId': userId,
-      'type': 'redeemRequest',
-      'rewardAmount': coinCost,
-      'balanceBefore': currentCoins,
-      'balanceAfter': currentCoins, // Coins not deducted yet (only on approval)
-      'referenceId': docRef.id,
-      'description': 'Redemption request for $package - $packageValue',
-      'createdAt': FieldValue.serverTimestamp(),
-      'status': 'pending',
+      final userData = userDoc.data()!;
+      final currentCoins = (userData['coins'] ?? 0).toInt();
+      final isBanned = userData['isBanned'] == true;
+
+      if (isBanned) {
+        throw const ValidationException(message: 'User is banned from redemptions.');
+      }
+
+      if (currentCoins < coinCost) {
+        throw const ValidationException(
+          message: 'Insufficient coins.',
+        );
+      }
+
+      // 3. WRITES
+      final docRef = _firestore.collection(AppConstants.withdrawalsCollection).doc();
+
+      withdrawal = WithdrawalModel(
+        withdrawalId: docRef.id,
+        userId: userId,
+        freeFireUID: freeFireUID,
+        package: package,
+        coinCost: coinCost,
+        packageValue: packageValue,
+        status: WithdrawalStatus.pending,
+        requestedAt: DateTime.now(),
+      );
+
+      tx.update(userRef, {
+        'coins': FieldValue.increment(-coinCost),
+        'totalRedeemedCoins': FieldValue.increment(coinCost),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      tx.set(docRef, withdrawal!.toFirestore());
+
+      final txRef = _firestore.collection(AppConstants.transactionsCollection).doc();
+      tx.set(txRef, {
+        'userId': userId,
+        'type': 'Redeem Request',
+        'rewardAmount': -coinCost,
+        'coins': -coinCost,
+        'balanceBefore': currentCoins,
+        'balanceAfter': currentCoins - coinCost,
+        'referenceId': docRef.id,
+        'description': 'Redemption request for $package - $packageValue',
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'completed',
+      });
     });
 
     await FirebaseService.logEvent('withdrawal_submitted', parameters: {
@@ -90,7 +108,7 @@ class WithdrawalRepository {
       'coins': coinCost,
     });
 
-    return withdrawal;
+    return withdrawal!;
   }
 
   /// Stream user's withdrawal history
@@ -121,17 +139,64 @@ class WithdrawalRepository {
         });
   }
 
-  /// Approve a withdrawal: assign redeem code, deduct coins, update statuses
+  /// Approve a withdrawal: assign redeem code, update statuses (coins already deducted)
   Future<void> approveWithdrawal({
     required String withdrawalId,
     String? redeemCode,
     String? adminRemark,
   }) async {
-    String? finalAssignedCode;
-    String targetUserId = '';
+    String? codeToAssign = redeemCode;
+    DocumentReference? codeRefToAssign;
+
+    // 1. Fetch required data OUTSIDE the transaction
+    if (codeToAssign == null || codeToAssign.isEmpty) {
+      final tempWithdrawalDoc = await _firestore
+          .collection(AppConstants.withdrawalsCollection)
+          .doc(withdrawalId)
+          .get();
+          
+      if (!tempWithdrawalDoc.exists) {
+        throw const FirestoreException(message: 'Withdrawal not found.');
+      }
+      final tempWithdrawal = WithdrawalModel.fromFirestore(tempWithdrawalDoc);
+      
+      if (tempWithdrawal.status != WithdrawalStatus.pending) {
+        throw const ValidationException(
+            message: 'This request has already been processed.');
+      }
+
+      final codeQuery = await _firestore
+          .collection(AppConstants.redeemCodesCollection)
+          .where('package', isEqualTo: tempWithdrawal.package)
+          .where('status', isEqualTo: 'available')
+          .limit(1)
+          .get();
+
+      if (codeQuery.docs.isEmpty) {
+        throw const ValidationException(
+            message: 'No available redeem codes for this package.');
+      }
+
+      codeToAssign = codeQuery.docs.first.data()['code'];
+      codeRefToAssign = codeQuery.docs.first.reference;
+    } else {
+      final codeQuery = await _firestore
+          .collection(AppConstants.redeemCodesCollection)
+          .where('code', isEqualTo: codeToAssign)
+          .limit(1)
+          .get();
+      if (codeQuery.docs.isNotEmpty) {
+        codeRefToAssign = codeQuery.docs.first.reference;
+      }
+    }
     
+    String targetUserId = '';
+
     await _firestore.runTransaction((tx) async {
-      // 1. Read the withdrawal
+      // ==========================================
+      // PHASE 1: READS
+      // ==========================================
+      
       final withdrawalRef = _firestore
           .collection(AppConstants.withdrawalsCollection)
           .doc(withdrawalId);
@@ -147,56 +212,24 @@ class WithdrawalRepository {
         throw const ValidationException(
             message: 'This request has already been processed.');
       }
-
-      // 2. Verify user has enough coins
-      final userRef = _firestore
-          .collection(AppConstants.usersCollection)
-          .doc(withdrawal.userId);
-      final userDoc = await tx.get(userRef);
-
-      if (!userDoc.exists) {
-        throw const FirestoreException(message: 'User not found.');
-      }
-
-      final currentCoins = (userDoc.data()!['coins'] ?? 0).toInt();
-      if (currentCoins < withdrawal.coinCost) {
-        throw const ValidationException(
-            message: 'User has insufficient coins.');
-      }
-
-      // 3. Find code if not provided
-      String? codeToAssign = redeemCode;
-      DocumentReference? codeRefToAssign;
-
-      if (codeToAssign == null || codeToAssign.isEmpty) {
-        final codeQuery = await _firestore
-            .collection(AppConstants.redeemCodesCollection)
-            .where('package', isEqualTo: withdrawal.package)
-            .where('status', isEqualTo: 'available')
-            .limit(1)
-            .get();
-
-        if (codeQuery.docs.isEmpty) {
-          throw const ValidationException(
-              message: 'No available redeem codes for this package.');
-        }
-
-        codeToAssign = codeQuery.docs.first.data()['code'];
-        codeRefToAssign = codeQuery.docs.first.reference;
-      }
       
-      finalAssignedCode = codeToAssign;
       targetUserId = withdrawal.userId;
+      
+      if (codeRefToAssign != null) {
+        final codeDoc = await tx.get(codeRefToAssign);
+        if (codeDoc.exists) {
+           final data = codeDoc.data() as Map<String, dynamic>?;
+           final status = data?['status'];
+           if (status != null && status.toString().toLowerCase() != 'available') {
+             throw const ValidationException(message: 'Redeem code is no longer available.');
+           }
+        }
+      }
 
-      // 4. Deduct coins from user
-      tx.update(userRef, {
-        'coins': FieldValue.increment(-withdrawal.coinCost),
-        'totalRedeemedCoins': FieldValue.increment(withdrawal.coinCost),
-        'withdrawalCount': FieldValue.increment(1),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      // ==========================================
+      // PHASE 2: WRITES
+      // ==========================================
 
-      // 5. Update withdrawal status
       tx.update(withdrawalRef, {
         'status': 'approved',
         'assignedRedeemCode': codeToAssign,
@@ -205,101 +238,96 @@ class WithdrawalRepository {
         'completedAt': FieldValue.serverTimestamp(),
       });
 
-      // 6. Log approval transaction
-      final txRef = _firestore
-          .collection(AppConstants.transactionsCollection)
-          .doc();
-      tx.set(txRef, {
-        'userId': withdrawal.userId,
-        'type': 'redeemApproved',
-        'rewardAmount': withdrawal.coinCost,
-        'balanceBefore': currentCoins,
-        'balanceAfter': currentCoins - withdrawal.coinCost,
-        'referenceId': withdrawalId,
-        'description':
-            'Redeem approved: ${withdrawal.package} - ${withdrawal.packageValue}',
-        'createdAt': FieldValue.serverTimestamp(),
-        'status': 'completed',
-      });
-
-      // 7. Mark redeem code as assigned
       if (codeRefToAssign != null) {
         tx.update(codeRefToAssign, {
-          'status': 'assigned',
+          'status': 'Assigned',
+          'assignedTo': withdrawal.userId,
           'assignedUser': withdrawal.userId,
           'assignedDate': FieldValue.serverTimestamp(),
         });
-      } else if (codeToAssign != null && codeToAssign.isNotEmpty) {
-        final codeQuery = await _firestore
-            .collection(AppConstants.redeemCodesCollection)
-            .where('code', isEqualTo: codeToAssign)
-            .limit(1)
-            .get();
-
-        if (codeQuery.docs.isNotEmpty) {
-          tx.update(codeQuery.docs.first.reference, {
-            'status': 'assigned',
-            'assignedUser': withdrawal.userId,
-            'assignedDate': FieldValue.serverTimestamp(),
-          });
-        }
       }
     });
 
-    // 8. Send Push Notification
     if (targetUserId.isNotEmpty) {
       await _notificationRepo.createNotification(
-        title: 'Congratulations!',
-        message: 'Your withdrawal request was approved. You received a redeem code!',
+        title: 'Redemption Approved',
+        message: 'Congratulations!\nYour redemption request has been approved.\nYour voucher code is now available.',
         type: NotificationType.redeemApproved,
         targetUserId: targetUserId,
       );
     }
   }
 
-  /// Reject a withdrawal — coins remain unchanged
+  /// Reject a withdrawal — refund coins to user
   Future<void> rejectWithdrawal({
     required String withdrawalId,
     String? adminRemark,
   }) async {
-    final withdrawalRef = _firestore
-        .collection(AppConstants.withdrawalsCollection)
-        .doc(withdrawalId);
-    final doc = await withdrawalRef.get();
-
-    if (!doc.exists) {
-      throw const FirestoreException(message: 'Withdrawal not found.');
-    }
-
-    final withdrawal = WithdrawalModel.fromFirestore(doc);
-
-    await withdrawalRef.update({
-      'status': 'rejected',
-      'adminRemark': adminRemark,
-      'completedAt': FieldValue.serverTimestamp(),
-    });
-
-    // Log rejection transaction
-    await _firestore.collection(AppConstants.transactionsCollection).add({
-      'userId': withdrawal.userId,
-      'type': 'redeemRejected',
-      'rewardAmount': withdrawal.coinCost,
-      'balanceBefore': 0, // Will be 0 since no coins changed
-      'balanceAfter': 0,
-      'referenceId': withdrawalId,
-      'description':
-          'Redeem rejected: ${withdrawal.package}${adminRemark != null ? " - $adminRemark" : ""}',
-      'createdAt': FieldValue.serverTimestamp(),
-      'status': 'completed',
-    });
+    String targetUserId = '';
     
-    // Send Push Notification
-    await _notificationRepo.createNotification(
-      title: 'Redemption Rejected',
-      message: 'Unfortunately your redemption request was rejected.${adminRemark != null ? " Reason: $adminRemark" : ""}',
-      type: NotificationType.redeemRejected,
-      targetUserId: withdrawal.userId,
-    );
+    await _firestore.runTransaction((tx) async {
+      final withdrawalRef = _firestore
+          .collection(AppConstants.withdrawalsCollection)
+          .doc(withdrawalId);
+      final withdrawalDoc = await tx.get(withdrawalRef);
+
+      if (!withdrawalDoc.exists) {
+        throw const FirestoreException(message: 'Withdrawal not found.');
+      }
+
+      final withdrawal = WithdrawalModel.fromFirestore(withdrawalDoc);
+
+      if (withdrawal.status != WithdrawalStatus.pending) {
+        throw const ValidationException(message: 'This request has already been processed.');
+      }
+      
+      targetUserId = withdrawal.userId;
+
+      final userRef = _firestore.collection(AppConstants.usersCollection).doc(withdrawal.userId);
+      final userDoc = await tx.get(userRef);
+
+      if (!userDoc.exists) {
+        throw const FirestoreException(message: 'User not found.');
+      }
+
+      final currentCoins = (userDoc.data()!['coins'] ?? 0).toInt();
+
+      // WRITES
+      tx.update(userRef, {
+        'coins': FieldValue.increment(withdrawal.coinCost),
+        'totalRedeemedCoins': FieldValue.increment(-withdrawal.coinCost),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      tx.update(withdrawalRef, {
+        'status': 'rejected',
+        'adminRemark': adminRemark,
+        'completedAt': FieldValue.serverTimestamp(),
+      });
+
+      final txRef = _firestore.collection(AppConstants.transactionsCollection).doc();
+      tx.set(txRef, {
+        'userId': withdrawal.userId,
+        'type': 'Redeem Refund',
+        'rewardAmount': withdrawal.coinCost,
+        'coins': withdrawal.coinCost,
+        'balanceBefore': currentCoins,
+        'balanceAfter': currentCoins + withdrawal.coinCost,
+        'referenceId': withdrawalId,
+        'description': 'Redeem rejected: ${withdrawal.package}${adminRemark != null ? " - $adminRemark" : ""}',
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'completed',
+      });
+    });
+
+    if (targetUserId.isNotEmpty) {
+      await _notificationRepo.createNotification(
+        title: 'Redemption Rejected',
+        message: 'Your redemption request was rejected. Your coins have been refunded.',
+        type: NotificationType.redeemRejected,
+        targetUserId: targetUserId,
+      );
+    }
   }
 
   /// Mark a redeem code as used by the user
