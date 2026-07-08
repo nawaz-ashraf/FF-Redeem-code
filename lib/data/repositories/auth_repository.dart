@@ -111,6 +111,7 @@ class AuthRepository {
       uid: userId,
       name: name,
       uuid: newUuid,
+      userId: newUuid.substring(0, 8).toUpperCase(),
       deviceId: deviceId,
       email: email,
       password: password,

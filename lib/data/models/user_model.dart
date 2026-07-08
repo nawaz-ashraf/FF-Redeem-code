@@ -5,6 +5,7 @@ class UserModel {
   final String uid;
   final String name;
   final String uuid;
+  final String userId;
   final String deviceId;
   final String? email;
   final String? password;
@@ -57,6 +58,7 @@ class UserModel {
     required this.uid,
     required this.name,
     required this.uuid,
+    required this.userId,
     required this.deviceId,
     this.email,
     this.password,
@@ -94,6 +96,7 @@ class UserModel {
       uid: doc.id,
       name: data['name'] ?? '',
       uuid: data['uuid'] ?? doc.id,
+      userId: data['userId'] ?? (data['uuid'] != null ? data['uuid'].toString().substring(0, 8).toUpperCase() : doc.id.substring(0, 8).toUpperCase()),
       deviceId: data['deviceId'] ?? '',
       email: data['email'],
       password: data['password'],
@@ -133,6 +136,7 @@ class UserModel {
     return {
       'name': name,
       'uuid': uuid,
+      'userId': userId,
       'deviceId': deviceId,
       'email': email,
       if (password != null) 'password': password,
@@ -172,6 +176,7 @@ class UserModel {
   UserModel copyWith({
     String? name,
     String? uuid,
+    String? userId,
     String? email,
     String? password,
     String? profileImage,
@@ -200,6 +205,7 @@ class UserModel {
       uid: uid,
       name: name ?? this.name,
       uuid: uuid ?? this.uuid,
+      userId: userId ?? this.userId,
       deviceId: deviceId,
       email: email ?? this.email,
       password: password ?? this.password,

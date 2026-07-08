@@ -127,7 +127,7 @@ class _HomePageState extends ConsumerState<HomePage>
                           ),
                         ),
                         Text(
-                          'ID: ${user.uuid.substring(0, 8).toUpperCase()}',
+                          'ID: ${user.userId}',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
