@@ -43,7 +43,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   'We use third-party services like Google AdMob for advertisements. These services may collect information used to identify you in accordance with their own privacy policies.'),
               _buildSectionTitle('5. Data Deletion'),
               _buildSectionText(
-                  'You have the right to request the deletion of your account and associated data. Please contact support for assistance.'),
+                  'You have the right to request the deletion of your account and associated data. To request account and data deletion, please send an email to gameredeemcode00@gmail.com with the subject "Delete my account". Upon processing, your account profile information and usage data will be permanently removed.'),
               _buildSectionTitle('6. Changes to This Policy'),
               _buildSectionText(
                   'We reserve the right to update this Privacy Policy at any time. We will notify you of any changes by posting the new Privacy Policy on this page.'),
