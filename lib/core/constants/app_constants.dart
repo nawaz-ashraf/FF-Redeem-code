@@ -63,21 +63,21 @@ class AppConstants {
   static const String notificationsEnabledKey = 'notifications_enabled';
   static const String darkModeKey = 'dark_mode';
 
-  // AdMob IDs (test IDs — replace with real ones before release)
+  // AdMob IDs (Production for Android, Test for iOS)
   static String get admobRewardedAdId {
-    if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/5224354917';
+    if (Platform.isAndroid) return 'ca-app-pub-4392358942856616/3163964358';
     if (Platform.isIOS) return 'ca-app-pub-3940256099942544/1712485313';
     return '';
   }
 
   static String get admobBannerAdId {
-    if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/6300978111';
+    if (Platform.isAndroid) return 'ca-app-pub-4392358942856616/4911361536';
     if (Platform.isIOS) return 'ca-app-pub-3940256099942544/2934735716';
     return '';
   }
 
   static String get admobInterstitialAdId {
-    if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/1033173712';
+    if (Platform.isAndroid) return 'ca-app-pub-4392358942856616/1962563328';
     if (Platform.isIOS) return 'ca-app-pub-3940256099942544/4411468910';
     return '';
   }
