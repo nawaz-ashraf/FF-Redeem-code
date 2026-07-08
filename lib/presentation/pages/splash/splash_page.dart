@@ -153,25 +153,17 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     height: 120,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(32),
-                      gradient: AppColors.primaryGradient,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.5),
+                          color: AppColors.primary.withOpacity(0.3),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
                       ],
                     ),
-                    child: const Center(
-                      child: Text(
-                        'FF',
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 2,
-                        ),
-                      ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(32),
+                      child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
                     ),
                   )
                       .animate()

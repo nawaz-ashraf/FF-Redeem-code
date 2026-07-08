@@ -90,29 +90,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     child: Container(
                       width: 80,
                       height: 80,
-                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(22),
-                        gradient: AppColors.primaryGradient,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.4),
+                            color: AppColors.primary.withOpacity(0.3),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
                         ],
                       ),
-                      child: const Center(
-                        child: FittedBox(
-                          child: Text(
-                            'Game',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
                       ),
                     )
                         .animate()
