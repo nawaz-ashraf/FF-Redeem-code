@@ -45,7 +45,7 @@ class ProfilePage extends ConsumerWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.primary.withOpacity(0.2),
+                    AppColors.primary.withValues(alpha: 0.2),
                     AppColors.surface,
                   ],
                   begin: Alignment.topCenter,
@@ -65,7 +65,7 @@ class ProfilePage extends ConsumerWidget {
                           gradient: AppColors.primaryGradient,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.4),
+                              color: AppColors.primary.withValues(alpha: 0.4),
                               blurRadius: 20,
                               spreadRadius: 2,
                             ),
@@ -155,7 +155,7 @@ class ProfilePage extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.accent1.withOpacity(0.3),
+                      color: AppColors.accent1.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     ),
@@ -180,7 +180,7 @@ class ProfilePage extends ConsumerWidget {
                         Text(
                           '${user.referralCount} invited',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 13,
                           ),
                         ),
@@ -194,7 +194,7 @@ class ProfilePage extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
+                              color: Colors.white.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -236,7 +236,7 @@ class ProfilePage extends ConsumerWidget {
                     Text(
                       '💰 Earn 20 coins for each friend who registers!',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 12,
                       ),
                     ),
@@ -685,7 +685,7 @@ class _AnimatedMenuItemState extends State<_AnimatedMenuItem>
                 ),
                 trailing: Icon(
                   Icons.arrow_forward_ios,
-                  color: widget.color ?? AppColors.primary.withOpacity(0.5),
+                  color: widget.color ?? AppColors.primary.withValues(alpha: 0.5),
                   size: 16,
                 )
                     .animate(

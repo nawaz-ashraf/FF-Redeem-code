@@ -21,25 +21,25 @@ class _MainShellState extends ConsumerState<MainShell> {
   bool _isBannerLoaded = false;
 
   final List<_NavItem> _navItems = [
-    _NavItem(
+    const _NavItem(
       path: '/home',
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
       label: 'Home',
     ),
-    _NavItem(
+    const _NavItem(
       path: '/redeem',
       icon: Icons.card_giftcard_outlined,
       activeIcon: Icons.card_giftcard,
       label: 'Redeem',
     ),
-    _NavItem(
+    const _NavItem(
       path: '/history',
       icon: Icons.history_outlined,
       activeIcon: Icons.history,
       label: 'History',
     ),
-    _NavItem(
+    const _NavItem(
       path: '/profile',
       icon: Icons.person_outline,
       activeIcon: Icons.person_rounded,
@@ -111,7 +111,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, -5),
                 ),
@@ -179,7 +179,7 @@ class _NavBarItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.15)
+              ? AppColors.primary.withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),

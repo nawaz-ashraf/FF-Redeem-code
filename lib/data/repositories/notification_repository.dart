@@ -66,7 +66,7 @@ class NotificationRepository {
         .map((snap) {
       return snap.docs
           .where((d) {
-        final data = d.data() as Map<String, dynamic>;
+        final data = d.data();
         final isBroadcast = data['type'] == 'broadcast' || data['broadcast'] == true;
         final isTargeted = data['targetUserId'] == userId;
         return isBroadcast || isTargeted || data['targetUserId'] == null;

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
@@ -64,7 +63,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 onChanged: (value) {
                   ref.read(isDarkModeProvider.notifier).state = value;
                 },
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ),
 
@@ -79,7 +78,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 onChanged: (value) {
                   setState(() => _notificationsEnabled = value);
                 },
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
               ),
             ),
 
@@ -143,7 +142,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             ),
 
             const SizedBox(height: 32),
-            Center(
+            const Center(
               child: Text(
                 '⚠️ Rewards are subject to availability.\nWe never promise unlimited diamonds.',
                 textAlign: TextAlign.center,
@@ -166,7 +165,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
         title.toUpperCase(),
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: AppColors.primary,
@@ -206,7 +205,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         subtitle: subtitle != null
             ? Text(
                 subtitle,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.textHint,
                   fontSize: 12,
                 ),
@@ -214,7 +213,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             : null,
         trailing: trailing ??
             (onTap != null
-                ? Icon(Icons.arrow_forward_ios,
+                ? const Icon(Icons.arrow_forward_ios,
                     color: AppColors.textHint, size: 14)
                 : null),
       ),

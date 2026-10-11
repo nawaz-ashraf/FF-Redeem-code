@@ -48,7 +48,7 @@ class _AdminRedeemCodesPageState extends ConsumerState<AdminRedeemCodesPage> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _packageFilter,
+                    initialValue: _packageFilter,
                     decoration: const InputDecoration(
                       labelText: 'Package',
                       isDense: true,
@@ -72,7 +72,7 @@ class _AdminRedeemCodesPageState extends ConsumerState<AdminRedeemCodesPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _statusFilter,
+                    initialValue: _statusFilter,
                     decoration: const InputDecoration(
                       labelText: 'Status',
                       isDense: true,
@@ -225,7 +225,7 @@ class _CodeCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: _statusColor.withOpacity(0.1),
+              color: _statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.vpn_key, color: _statusColor, size: 20),
@@ -246,7 +246,7 @@ class _CodeCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${code.package} • ${code.value}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -258,7 +258,7 @@ class _CodeCard extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: _statusColor.withOpacity(0.1),
+              color: _statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

@@ -18,35 +18,35 @@ class _OnboardingPageState extends State<OnboardingPage> {
   int _currentPage = 0;
 
   final List<_OnboardingData> _pages = [
-    _OnboardingData(
+    const _OnboardingData(
       emoji: '🎮',
       title: 'Watch Ads & Earn',
       subtitle: 'Watch short rewarded ads to earn coins.\nUp to 30 ads per day!',
       gradient: AppColors.primaryGradient,
-      bgColor: const Color(0xFF1A0A00),
+      bgColor: Color(0xFF1A0A00),
     ),
-    _OnboardingData(
+    const _OnboardingData(
       emoji: '🎴',
       title: 'Scratch, Spin & Win',
       subtitle:
           'Scratch cards and spin the wheel\ndaily to earn bonus coins!',
       gradient: AppColors.purpleGradient,
-      bgColor: const Color(0xFF10011A),
+      bgColor: Color(0xFF10011A),
     ),
-    _OnboardingData(
+    const _OnboardingData(
       emoji: '💎',
       title: 'Redeem Codes',
       subtitle:
           'Exchange your coins for real\nreward codes. Rewards are\nsubject to availability.',
       gradient: AppColors.blueGradient,
-      bgColor: const Color(0xFF001020),
+      bgColor: Color(0xFF001020),
     ),
-    _OnboardingData(
+    const _OnboardingData(
       emoji: '👥',
       title: 'Invite & Earn',
       subtitle: 'Invite friends with your unique\nreferral code and earn 20 coins\nfor each successful registration!',
       gradient: AppColors.greenGradient,
-      bgColor: const Color(0xFF001510),
+      bgColor: Color(0xFF001510),
     ),
   ];
 
@@ -91,7 +91,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             right: 24,
             child: TextButton(
               onPressed: _finish,
-              child: Text(
+              child: const Text(
                 'Skip',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -110,7 +110,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 48),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -223,7 +223,7 @@ class _OnboardingCard extends StatelessWidget {
               gradient: data.gradient,
               boxShadow: [
                 BoxShadow(
-                  color: data.gradient.colors.first.withOpacity(0.4),
+                  color: data.gradient.colors.first.withValues(alpha: 0.4),
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),
@@ -263,7 +263,7 @@ class _OnboardingCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
               data.subtitle,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 color: AppColors.textSecondary,
                 height: 1.6,

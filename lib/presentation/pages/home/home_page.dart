@@ -6,7 +6,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/utils/app_utils.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reward_provider.dart';
@@ -128,7 +127,7 @@ class _HomePageState extends ConsumerState<HomePage>
                         ),
                         Text(
                           'ID: ${user.userId}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
@@ -195,16 +194,16 @@ class _HomePageState extends ConsumerState<HomePage>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.warning.withOpacity(0.1),
+                        color: AppColors.warning.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.warning.withOpacity(0.3),
+                          color: AppColors.warning.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: Row(
+                      child: const Row(
                         children: [
-                          const Text('⚠️', style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 8),
+                          Text('⚠️', style: TextStyle(fontSize: 16)),
+                          SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Rewards are subject to availability. We never promise unlimited diamonds.',
@@ -240,12 +239,12 @@ class _HomePageState extends ConsumerState<HomePage>
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
+          color: AppColors.primary.withValues(alpha: 0.3),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -257,7 +256,7 @@ class _HomePageState extends ConsumerState<HomePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Current Balance',
                   style: TextStyle(
                     fontSize: 13,
@@ -279,16 +278,16 @@ class _HomePageState extends ConsumerState<HomePage>
                           letterSpacing: -1,
                           shadows: [
                             Shadow(
-                              color: AppColors.gold.withOpacity(
-                                0.3 + _coinPulseController.value * 0.2,
+                              color: AppColors.gold.withValues(
+                                alpha: 0.3 + _coinPulseController.value * 0.2,
                               ),
                               blurRadius: 10,
                             ),
                           ],
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8, left: 6),
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 8, left: 6),
                         child: Text(
                           'coins',
                           style: TextStyle(
@@ -311,7 +310,7 @@ class _HomePageState extends ConsumerState<HomePage>
               gradient: AppColors.goldGradient,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.gold.withOpacity(0.4),
+                  color: AppColors.gold.withValues(alpha: 0.4),
                   blurRadius: 16,
                   spreadRadius: 2,
                 ),

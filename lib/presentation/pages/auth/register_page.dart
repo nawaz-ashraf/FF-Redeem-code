@@ -4,7 +4,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../providers/auth_provider.dart';
@@ -49,8 +48,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please accept Terms & Privacy Policy'),
+        const SnackBar(
+          content: Text('Please accept Terms & Privacy Policy'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -155,8 +154,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Email is required';
-                      if (!v.contains('@') || !v.contains('.'))
+                      if (!v.contains('@') || !v.contains('.')) {
                         return 'Enter valid email';
+                      }
                       return null;
                     },
                   ).animate(delay: 150.ms).slideY(begin: 0.3, duration: 400.ms).fade(),
@@ -236,7 +236,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           padding: const EdgeInsets.only(top: 12),
                           child: RichText(
                             text: TextSpan(
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 13,
                               ),
@@ -244,7 +244,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                 const TextSpan(text: 'I accept the '),
                                 TextSpan(
                                   text: 'Terms of Service',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -254,7 +254,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                 const TextSpan(text: ' and '),
                                 TextSpan(
                                   text: 'Privacy Policy',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -282,13 +282,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
+                        const Text(
                           'Already have an account? ',
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
                         GestureDetector(
                           onTap: () => context.go('/login'),
-                          child: Text(
+                          child: const Text(
                             'Sign In',
                             style: TextStyle(
                               color: AppColors.primary,
@@ -300,7 +300,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                   ).animate(delay: 500.ms).fade(duration: 400.ms),
                   const SizedBox(height: 20),
-                  Center(
+                  const Center(
                     child: Text(
                       '⚠️ Rewards are subject to availability\nNever promises unlimited diamonds',
                       style: TextStyle(

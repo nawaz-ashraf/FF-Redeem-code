@@ -8,7 +8,6 @@ import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/reward_provider.dart';
 import '../../../data/models/app_settings_model.dart';
-import '../../../data/repositories/withdrawal_repository.dart';
 
 class RedeemPage extends ConsumerStatefulWidget {
   const RedeemPage({super.key});
@@ -66,10 +65,10 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.info.withOpacity(0.1),
+                          color: AppColors.info.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: AppColors.info.withOpacity(0.3)),
+                              color: AppColors.info.withValues(alpha: 0.3)),
                         ),
                         child: const Row(
                           children: [
@@ -146,7 +145,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
           colors: [Color(0xFF1E2A42), Color(0xFF0F1A32)],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.gold.withOpacity(0.3)),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -156,7 +155,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Your Balance',
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -194,7 +193,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.history, color: AppColors.primary, size: 20),
@@ -249,7 +248,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
               const SizedBox(height: 8),
               Text(
                 'Cost: ${package.coins} coins',
-                style: TextStyle(
+                style: const TextStyle(
                     color: AppColors.error, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 16),
@@ -273,7 +272,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
                 },
               ),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 '⚠️ Your request will be reviewed by admin. Coins are deducted only after approval.',
                 style: TextStyle(
                   fontSize: 12,
@@ -287,7 +286,7 @@ class _RedeemPageState extends ConsumerState<RedeemPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
+            child: const Text('Cancel',
                 style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
@@ -380,7 +379,7 @@ class _RedeemPackageCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: gradient.colors.first.withOpacity(0.3),
+                color: gradient.colors.first.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -418,7 +417,7 @@ class _RedeemPackageCard extends StatelessWidget {
                           TextSpan(
                             text: '${package.coins} coins',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
                             ),
@@ -442,7 +441,7 @@ class _RedeemPackageCard extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                   disabledBackgroundColor:
-                      Colors.white.withOpacity(0.3),
+                      Colors.white.withValues(alpha: 0.3),
                 ),
                 child: FittedBox(
                   fit: BoxFit.scaleDown,

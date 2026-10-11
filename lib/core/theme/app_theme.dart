@@ -212,7 +212,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 4,
-          shadowColor: AppColors.primary.withOpacity(0.5),
+          shadowColor: AppColors.primary.withValues(alpha: 0.5),
           textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,

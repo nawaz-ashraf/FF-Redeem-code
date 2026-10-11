@@ -1,6 +1,5 @@
 // lib/presentation/widgets/home/reward_card.dart
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
 
 class RewardCardData {
   final String title;
@@ -73,7 +72,7 @@ class _RewardCardState extends State<RewardCard>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: widget.data.gradient.colors.first.withOpacity(0.3),
+                color: widget.data.gradient.colors.first.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -90,7 +89,7 @@ class _RewardCardState extends State<RewardCard>
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -102,7 +101,7 @@ class _RewardCardState extends State<RewardCard>
                   height: 70,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.06),
+                    color: Colors.white.withValues(alpha: 0.06),
                   ),
                 ),
               ),
@@ -123,7 +122,7 @@ class _RewardCardState extends State<RewardCard>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -152,7 +151,7 @@ class _RewardCardState extends State<RewardCard>
                       widget.data.subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                       ),
                     ),

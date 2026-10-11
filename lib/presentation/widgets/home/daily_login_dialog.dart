@@ -115,7 +115,7 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
             gradient: AppColors.primaryGradient,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.4),
+                color: AppColors.primary.withValues(alpha: 0.4),
                 blurRadius: 20,
               ),
             ],
@@ -159,7 +159,7 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: day == 7
-                            ? AppColors.gold.withOpacity(0.2)
+                            ? AppColors.gold.withValues(alpha: 0.2)
                             : AppColors.surfaceLight,
                         border: Border.all(
                           color: day == 7 ? AppColors.gold : AppColors.border,
@@ -249,7 +249,7 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
             gradient: AppColors.goldGradient,
             boxShadow: [
               BoxShadow(
-                color: AppColors.gold.withOpacity(0.5),
+                color: AppColors.gold.withValues(alpha: 0.5),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),

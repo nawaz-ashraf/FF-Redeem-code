@@ -23,7 +23,7 @@ class NotificationsPage extends ConsumerWidget {
             onPressed: () {
               ref.read(notificationRepositoryProvider).markAllAsRead();
             },
-            child: Text(
+            child: const Text(
               'Mark All Read',
               style: TextStyle(
                 color: AppColors.primary,
@@ -50,7 +50,7 @@ class NotificationsPage extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  const Text(
                     'You\'ll see updates and announcements here',
                     style: TextStyle(
                       color: AppColors.textHint,
@@ -106,12 +106,12 @@ class _NotificationCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: notification.isRead
               ? AppColors.surface
-              : AppColors.primary.withOpacity(0.08),
+              : AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: notification.isRead
                 ? AppColors.border
-                : AppColors.primary.withOpacity(0.3),
+                : AppColors.primary.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
@@ -121,7 +121,7 @@ class _NotificationCard extends ConsumerWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -164,7 +164,7 @@ class _NotificationCard extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     notification.message,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,
                       height: 1.4,
@@ -175,7 +175,7 @@ class _NotificationCard extends ConsumerWidget {
                   const SizedBox(height: 6),
                   Text(
                     _formatTime(notification.createdAt),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.textHint,
                       fontSize: 11,
                     ),

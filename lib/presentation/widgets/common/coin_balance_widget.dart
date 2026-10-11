@@ -24,7 +24,7 @@ class CoinBalanceWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.gold.withOpacity(0.3),
+            color: AppColors.gold.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -50,7 +50,7 @@ class CoinBalanceWidget extends StatelessWidget {
       ),
     ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(
           duration: 2000.ms,
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
         );
   }
 }

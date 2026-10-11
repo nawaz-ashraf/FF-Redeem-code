@@ -41,7 +41,7 @@ class _ErrorStateWidget extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
                 height: 1.5,
@@ -154,9 +154,9 @@ class MaintenanceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: AppColors.background,
-      body: const _ErrorStateWidget(
+      body: _ErrorStateWidget(
         emoji: '🔧',
         title: 'Under Maintenance',
         message:

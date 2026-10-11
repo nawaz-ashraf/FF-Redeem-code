@@ -1,6 +1,5 @@
 // lib/core/animations/animations.dart
 import 'package:flutter/material.dart';
-import 'package:confetti/confetti.dart';
 import '../theme/app_theme.dart';
 
 /// Coin count-up animation widget
@@ -94,12 +93,12 @@ class RewardPopup extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: AppColors.gold.withOpacity(0.4),
+            color: AppColors.gold.withValues(alpha: 0.4),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.gold.withOpacity(0.2),
+              color: AppColors.gold.withValues(alpha: 0.2),
               blurRadius: 30,
               spreadRadius: 5,
             ),
@@ -133,7 +132,7 @@ class RewardPopup extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
@@ -221,7 +220,7 @@ class _TickAnimationState extends State<TickAnimation>
         height: widget.size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: widget.color.withOpacity(0.15),
+          color: widget.color.withValues(alpha: 0.15),
           border: Border.all(color: widget.color, width: 3),
         ),
         child: Icon(

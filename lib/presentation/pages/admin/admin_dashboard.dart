@@ -181,9 +181,9 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,7 +246,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? color.withOpacity(0.2)
+                          ? color.withValues(alpha: 0.2)
                           : AppColors.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
@@ -338,7 +338,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: user.isBanned
-                              ? AppColors.error.withOpacity(0.3)
+                              ? AppColors.error.withValues(alpha: 0.3)
                               : AppColors.border,
                         ),
                       ),
@@ -380,7 +380,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                                 ),
                                 Text(
                                   'ID: ${user.uuid.substring(0, 8).toUpperCase()} • ${user.coins} coins',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
                                   ),
@@ -405,7 +405,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
   Widget _buildNotificationsTab() {
     final titleCtrl = TextEditingController();
     final bodyCtrl = TextEditingController();
-    NotificationType _selectedType = NotificationType.announcement;
+    NotificationType selectedType = NotificationType.announcement;
 
     return StatefulBuilder(builder: (context, setState) {
       return Padding(
@@ -440,7 +440,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<NotificationType>(
-                value: _selectedType,
+                initialValue: selectedType,
                 decoration: const InputDecoration(
                   labelText: 'Notification Type',
                   border: OutlineInputBorder(),
@@ -453,7 +453,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                   );
                 }).toList(),
                 onChanged: (val) {
-                  if (val != null) setState(() => _selectedType = val);
+                  if (val != null) setState(() => selectedType = val);
                 },
               ),
               const SizedBox(height: 24),
@@ -475,10 +475,10 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard>
                         .sendBroadcast(
                           title: titleCtrl.text.trim(),
                           message: bodyCtrl.text.trim(),
-                          type: _selectedType,
+                          type: selectedType,
                         );
 
-                    if (mounted) {
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Notification sent successfully ✅'),
@@ -536,7 +536,7 @@ class _AdminWithdrawalCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Game ID: ${withdrawal.freeFireUID}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -544,7 +544,7 @@ class _AdminWithdrawalCard extends ConsumerWidget {
                     ),
                     Text(
                       '${withdrawal.coinCost} coins • ${withdrawal.requestedAt.toLocal().toString().substring(0, 10)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -591,7 +591,7 @@ class _AdminWithdrawalCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

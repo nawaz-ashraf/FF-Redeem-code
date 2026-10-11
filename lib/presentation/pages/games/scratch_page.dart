@@ -67,6 +67,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
       
       final result = await AdService.showRewardedAd();
       
+      if (!mounted) return;
       if (result.rewarded) {
         setState(() {
           _isAdWatched = true;
@@ -202,7 +203,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                   if (!_isRevealed)
                     Column(
                       children: [
-                        Text(
+                        const Text(
                           'Scratch the card above to reveal your reward!',
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -226,7 +227,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                         const SizedBox(height: 16),
                         Text(
                           'Possible rewards: ${AppConstants.scratchRewards.map((r) => '+$r').join(', ')} coins',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.textHint,
                             fontSize: 13,
                           ),
@@ -238,7 +239,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                       children: [
                         Text(
                           'You won $_reward coins! 🎉',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
                             color: AppColors.gold,
@@ -306,7 +307,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.gold.withOpacity(0.4),
+                color: AppColors.gold.withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -330,7 +331,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                   'COINS',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     letterSpacing: 3,
                   ),
                 ),
@@ -358,14 +359,14 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                     children: [
                       Icon(
                         Icons.touch_app,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         size: 48,
                       ),
                       const SizedBox(height: 12),
                       Text(
                         _isAdWatched ? 'Tap & Scratch to Reveal' : 'Locked',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
@@ -375,7 +376,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                          Text(
                           'Watch an ad to unlock',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                         ),
@@ -385,7 +386,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
                         borderRadius: BorderRadius.circular(6),
                         child: LinearProgressIndicator(
                           value: _scratchPercent / 100,
-                          backgroundColor: Colors.white.withOpacity(0.2),
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
                           valueColor: const AlwaysStoppedAnimation<Color>(
                               Colors.white),
                           minHeight: 6,
@@ -403,7 +404,7 @@ class _ScratchPageState extends ConsumerState<ScratchPage>
             width: 280,
             height: 200,
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Center(

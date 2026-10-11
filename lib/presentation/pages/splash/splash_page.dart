@@ -51,9 +51,9 @@ class _SplashPageState extends ConsumerState<SplashPage>
       }
 
       // Optional: user may tap "Later" to continue, or "Update" to open store.
-      if (!context.mounted) return;
+      if (!mounted) return;
       final shouldContinue = await showUpdateDialog(context, updateStatus);
-      if (!shouldContinue || !context.mounted) return;
+      if (!shouldContinue || !mounted) return;
     }
 
     await _continueNavigation();
@@ -64,7 +64,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
     if (!mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     final isOnboardingDone =
         prefs.getBool(AppConstants.isOnboardingDoneKey) ?? false;
@@ -112,8 +112,8 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppColors.primary.withOpacity(
-                            0.15 + _glowController.value * 0.1),
+                        AppColors.primary.withValues(
+                            alpha: 0.15 + _glowController.value * 0.1),
                         Colors.transparent,
                       ],
                     ),
@@ -133,8 +133,8 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppColors.accent1.withOpacity(
-                            0.12 + _glowController.value * 0.08),
+                        AppColors.accent1.withValues(
+                            alpha: 0.12 + _glowController.value * 0.08),
                         Colors.transparent,
                       ],
                     ),
@@ -155,7 +155,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           blurRadius: 30,
                           spreadRadius: 5,
                         ),
@@ -176,9 +176,9 @@ class _SplashPageState extends ConsumerState<SplashPage>
                       .fade(duration: 600.ms),
                   const SizedBox(height: 24),
                   // App name
-                  Text(
+                  const Text(
                     AppConstants.appName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -194,7 +194,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                       )
                       .fade(duration: 600.ms),
                   const SizedBox(height: 8),
-                  Text(
+                  const Text(
                     'Earn Coins • Get Rewards',
                     style: TextStyle(
                       fontSize: 16,
@@ -216,7 +216,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     width: 180,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
+                      child: const LinearProgressIndicator(
                         backgroundColor:
                             AppColors.surface,
                         valueColor: AlwaysStoppedAnimation<Color>(
@@ -229,7 +229,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                       .animate(delay: 800.ms)
                       .fade(duration: 400.ms),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Rewards are subject to availability',
                     style: TextStyle(
                       fontSize: 11,
@@ -247,7 +247,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
               bottom: 32,
               left: 0,
               right: 0,
-              child: Text(
+              child: const Text(
                 'v${AppConstants.appVersion}',
                 textAlign: TextAlign.center,
                 style: TextStyle(

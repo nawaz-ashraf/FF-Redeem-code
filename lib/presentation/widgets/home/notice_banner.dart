@@ -46,12 +46,12 @@ class NoticeBanner extends StatelessWidget {
           colors: [Color(0xFF1A2A4A), Color(0xFF0F1A35)],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const Text('📢', style: TextStyle(fontSize: 18)),
-          const SizedBox(width: 12),
+          Text('📢', style: TextStyle(fontSize: 18)),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               'Welcome! Watch ads, scratch cards & spin the wheel to earn coins.',
@@ -92,9 +92,9 @@ class NoticeBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -103,7 +103,7 @@ class NoticeBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
                 height: 1.4,

@@ -83,7 +83,7 @@ class StreakWidget extends StatelessWidget {
                   streak < 7
                       ? 'Complete day 7 for 50 bonus coins!'
                       : '🏆 You completed a full streak!',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -133,7 +133,7 @@ class _StreakDay extends StatelessWidget {
             boxShadow: isDone
                 ? [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.4),
+                      color: AppColors.primary.withValues(alpha: 0.4),
                       blurRadius: 8,
                       spreadRadius: 1,
                     )

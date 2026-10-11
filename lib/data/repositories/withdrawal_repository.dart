@@ -4,22 +4,17 @@ import '../../core/constants/app_constants.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/services/firebase_service.dart';
 import '../models/withdrawal_model.dart';
-import '../models/redeem_code_model.dart';
 import '../models/notification_model.dart';
-import 'user_repository.dart';
 import 'notification_repository.dart';
 
 class WithdrawalRepository {
   final FirebaseFirestore _firestore;
-  final UserRepository _userRepo;
   final NotificationRepository _notificationRepo;
 
   WithdrawalRepository({
     FirebaseFirestore? firestore,
-    UserRepository? userRepo,
     NotificationRepository? notificationRepo,
   })  : _firestore = firestore ?? FirebaseService.firestore,
-        _userRepo = userRepo ?? UserRepository(),
         _notificationRepo = notificationRepo ?? NotificationRepository();
 
   Future<WithdrawalModel> submitWithdrawal({

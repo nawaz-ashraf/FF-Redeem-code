@@ -20,7 +20,7 @@ class TermsOfServicePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Last Updated: Today',
                 style: TextStyle(
                   fontSize: 13,

@@ -218,10 +218,10 @@ class _ProfileTab extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 36,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                   child: Text(
                     user.name.initials,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
                       color: AppColors.primary,
@@ -238,7 +238,7 @@ class _ProfileTab extends StatelessWidget {
                 ),
                 Text(
                   'ID: ${user.uuid.substring(0, 8).toUpperCase()}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
@@ -249,8 +249,8 @@ class _ProfileTab extends StatelessWidget {
                       horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: user.isBanned
-                        ? AppColors.error.withOpacity(0.1)
-                        : AppColors.success.withOpacity(0.1),
+                        ? AppColors.error.withValues(alpha: 0.1)
+                        : AppColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -328,7 +328,7 @@ class _ProfileTab extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
           Text(
             value,
             style: const TextStyle(
@@ -355,7 +355,7 @@ class _ProfileTab extends StatelessWidget {
         icon: Icon(icon, color: color, size: 18),
         label: Text(label, style: TextStyle(color: color)),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: color.withOpacity(0.4)),
+          side: BorderSide(color: color.withValues(alpha: 0.4)),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -413,7 +413,7 @@ class _TransactionsTab extends ConsumerWidget {
                         ),
                         Text(
                           tx.description,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.textHint,
                           ),
@@ -487,7 +487,7 @@ class _WithdrawalsTab extends ConsumerWidget {
                         ),
                         Text(
                           '${w.coinCost} coins',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.textHint,
                           ),
@@ -499,7 +499,7 @@ class _WithdrawalsTab extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: _statusColor(w.status).withOpacity(0.1),
+                      color: _statusColor(w.status).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(

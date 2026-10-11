@@ -21,7 +21,6 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
   bool _isAdLoading = false;
   bool _isAdReady = false;
   bool _adFailed = false;
-  int? _lastReward;
 
   @override
   void initState() {
@@ -90,7 +89,6 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
           .claimAdReward(result.rewardId!);
 
       if (coins != null && mounted) {
-        setState(() => _lastReward = coins);
         // Reset interstitial counter after reward
         AdService.resetScreenCounter();
         _showRewardDialog(coins);
@@ -135,7 +133,7 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.accent2.withOpacity(0.3),
+                        color: AppColors.accent2.withValues(alpha: 0.3),
                         blurRadius: 16,
                         offset: const Offset(0, 8),
                       ),
@@ -162,7 +160,7 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
                               '+${AppConstants.adRewardCoins} coins per ad',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ),
                           ],
@@ -233,7 +231,7 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
                             remaining > 0
                                 ? '$remaining ads remaining today'
                                 : 'You\'ve watched all ads for today! 🎉',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
@@ -275,9 +273,9 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
                                 ? 'Watch Ad (+${AppConstants.adRewardCoins} coins)'
                                 : 'Loading...',
                         style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.accent2,
@@ -291,7 +289,7 @@ class _WatchAdsPageState extends ConsumerState<WatchAdsPage> {
 
                 const SizedBox(height: 16),
 
-                Text(
+                const Text(
                   '⚠️ Watch complete ads to earn rewards. Do not close the ad early.',
                   textAlign: TextAlign.center,
                   style: TextStyle(

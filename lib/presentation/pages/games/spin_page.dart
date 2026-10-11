@@ -45,7 +45,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
   void initState() {
     super.initState();
     _spinController = AnimationController(vsync: this);
-    _spinAnimation = AlwaysStoppedAnimation(0.0);
+    _spinAnimation = const AlwaysStoppedAnimation(0.0);
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 3));
     AdService.loadRewardedAd();
@@ -220,7 +220,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 30,
                               spreadRadius: 5,
                             ),
@@ -254,7 +254,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
                           gradient: AppColors.primaryGradient,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.5),
+                              color: AppColors.primary.withValues(alpha: 0.5),
                               blurRadius: 15,
                             ),
                           ],
@@ -278,7 +278,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.4),
+                                color: Colors.black.withValues(alpha: 0.4),
                                 blurRadius: 8,
                               ),
                             ],
@@ -296,7 +296,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
                   if (_reward != null)
                     Text(
                       'You won $_reward coins! 🎉',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
                         color: AppColors.gold,
@@ -324,7 +324,7 @@ class _SpinPageState extends ConsumerState<SpinPage>
                             ? null
                             : [
                                 BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.5),
+                                  color: AppColors.primary.withValues(alpha: 0.5),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
                                 ),
@@ -340,12 +340,12 @@ class _SpinPageState extends ConsumerState<SpinPage>
                                   strokeWidth: 2.5,
                                 ),
                               )
-                            : Row(
+                            : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.play_arrow, color: Colors.white),
-                                  const SizedBox(width: 8),
-                                  const Text(
+                                  Icon(Icons.play_arrow, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text(
                                     'UNLOCK SPIN',
                                     style: TextStyle(
                                       fontSize: 18,
@@ -418,7 +418,7 @@ class _WheelPainter extends CustomPainter {
 
       // Draw border
       final borderPaint = Paint()
-        ..color = Colors.white.withOpacity(0.2)
+        ..color = Colors.white.withValues(alpha: 0.2)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5;
       canvas.drawArc(

@@ -5,9 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/withdrawal_model.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/reward_provider.dart';
-import '../../../data/repositories/withdrawal_repository.dart';
 
 class RedemptionHistoryPage extends ConsumerStatefulWidget {
   const RedemptionHistoryPage({super.key});
@@ -149,7 +147,7 @@ class _RedemptionCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: statusColor.withOpacity(0.3)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,8 +170,8 @@ class _RedemptionCard extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: isUsed
-                      ? AppColors.info.withOpacity(0.15)
-                      : statusColor.withOpacity(0.15),
+                      ? AppColors.info.withValues(alpha: 0.15)
+                      : statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -192,12 +190,12 @@ class _RedemptionCard extends ConsumerWidget {
             children: [
               Text(
                 '${withdrawal.coinCost} coins',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
               const Spacer(),
               Text(
                 withdrawal.requestedAt.toLocal().toString().substring(0, 10),
-                style: TextStyle(color: AppColors.textHint, fontSize: 12),
+                style: const TextStyle(color: AppColors.textHint, fontSize: 12),
               ),
             ],
           ),
@@ -208,7 +206,7 @@ class _RedemptionCard extends ConsumerWidget {
               padding: const EdgeInsets.all(8),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.1),
+                color: AppColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Text(
@@ -227,7 +225,7 @@ class _RedemptionCard extends ConsumerWidget {
               padding: const EdgeInsets.all(8),
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -254,7 +252,7 @@ class _RedemptionCard extends ConsumerWidget {
                 padding: const EdgeInsets.all(8),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -264,7 +262,7 @@ class _RedemptionCard extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 12),
-            Text(
+            const Text(
               '🎁 Your Redeem Code:',
               style: TextStyle(
                 color: AppColors.textSecondary,

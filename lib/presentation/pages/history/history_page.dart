@@ -255,7 +255,7 @@ class _TransactionItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.15)),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -264,7 +264,7 @@ class _TransactionItem extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -290,7 +290,7 @@ class _TransactionItem extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   transaction.description,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -300,7 +300,7 @@ class _TransactionItem extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   AppUtils.formatDateTime(transaction.createdAt),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
                     color: AppColors.textHint,
                   ),
@@ -320,9 +320,9 @@ class _TransactionItem extends StatelessWidget {
                   color: color,
                 ),
               ),
-              Text(
+              const Text(
                 '🪙',
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(fontSize: 12),
               ),
             ],
           ),

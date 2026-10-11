@@ -77,7 +77,7 @@ class RewardRepository {
     }
 
     // Pseudo-random reward from scratch rewards pool
-    final rewards = AppConstants.scratchRewards;
+    const rewards = AppConstants.scratchRewards;
     final reward =
         rewards[DateTime.now().millisecondsSinceEpoch % rewards.length];
 
@@ -118,7 +118,7 @@ class RewardRepository {
       );
     }
 
-    final rewards = AppConstants.spinRewards;
+    const rewards = AppConstants.spinRewards;
     final reward =
         rewards[DateTime.now().microsecondsSinceEpoch % rewards.length];
 
