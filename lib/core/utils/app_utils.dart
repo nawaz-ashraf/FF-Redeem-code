@@ -38,6 +38,18 @@ class AppUtils {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  /// Format a date as UTC yyyy-MM-dd to ensure consistent calendar day policy
+  /// across restarts, reinstallation, and timezone changes.
+  static String getRewardDayKey([DateTime? date]) {
+    final d = (date ?? DateTime.now()).toUtc();
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  /// Check if two dates fall on the same UTC reward calendar day.
+  static bool isSameRewardDay(DateTime a, DateTime b) {
+    return getRewardDayKey(a) == getRewardDayKey(b);
+  }
+
   static String generateReferralCode(String userId) {
     return 'FF${userId.substring(0, 6).toUpperCase()}';
   }

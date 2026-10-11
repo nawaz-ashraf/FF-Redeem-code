@@ -14,16 +14,17 @@ class AppConstants {
   // Coin rewards
   static const int adRewardCoins = 5;
   static const int dailyLoginCoins = 5;
-  static const int referralCoins = 20;
+  static const int referralCoins = 10;
+  static const int maxDailyReferrals = 5;
   static const int maxDailyAds = 30;
   static const int maxDailyScratch = 3;
   static const int maxDailySpin = 3;
 
   // Redeem packages
   static const Map<String, int> redeemPackages = {
-    '₹100 Code': 2500,
-    '₹200 Code': 5000,
-    '₹400 Code': 10000,
+    '₹50 Code': 2500,
+    '₹100 Code': 5000,
+    '₹200 Code': 10000,
   };
 
   // Firestore collections
@@ -32,6 +33,7 @@ class AppConstants {
   static const String withdrawalsCollection = 'withdrawals';
   static const String redeemCodesCollection = 'redeemCodes';
   static const String referralsCollection = 'referrals';
+  static const String dailyReferralsCollection = 'dailyReferrals';
   static const String dailyRewardsCollection = 'dailyRewards';
   static const String adRewardsCollection = 'adRewards';
   static const String spinHistoryCollection = 'spinHistory';

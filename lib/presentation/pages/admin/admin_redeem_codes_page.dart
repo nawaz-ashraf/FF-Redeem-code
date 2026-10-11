@@ -59,11 +59,13 @@ class _AdminRedeemCodesPageState extends ConsumerState<AdminRedeemCodesPage> {
                     items: const [
                       DropdownMenuItem(value: null, child: Text('All')),
                       DropdownMenuItem(
+                          value: '₹50 Code', child: Text('₹50')),
+                      DropdownMenuItem(
                           value: '₹100 Code', child: Text('₹100')),
                       DropdownMenuItem(
                           value: '₹200 Code', child: Text('₹200')),
                       DropdownMenuItem(
-                          value: '₹400 Code', child: Text('₹400')),
+                          value: '₹400 Code', child: Text('₹400 (Legacy)')),
                     ],
                     onChanged: (val) =>
                         setState(() => _packageFilter = val),
@@ -152,11 +154,11 @@ class _AdminRedeemCodesPageState extends ConsumerState<AdminRedeemCodesPage> {
               decoration: const InputDecoration(labelText: 'Package'),
               items: const [
                 DropdownMenuItem(
+                    value: '₹50 Code', child: Text('₹50 Code')),
+                DropdownMenuItem(
                     value: '₹100 Code', child: Text('₹100 Code')),
                 DropdownMenuItem(
                     value: '₹200 Code', child: Text('₹200 Code')),
-                DropdownMenuItem(
-                    value: '₹400 Code', child: Text('₹400 Code')),
               ],
               onChanged: (val) => packageCtrl.text = val ?? '',
             ),
@@ -164,7 +166,7 @@ class _AdminRedeemCodesPageState extends ConsumerState<AdminRedeemCodesPage> {
             TextField(
               controller: valueCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Value (e.g., ₹100)'),
+                  labelText: 'Value (e.g., ₹50)'),
             ),
           ],
         ),

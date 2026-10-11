@@ -8,10 +8,12 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/reward_provider.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -177,12 +179,25 @@ class ProfilePage extends ConsumerWidget {
                           ),
                         ),
                         const Spacer(),
-                        Text(
-                          '${user.referralCount} invited',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 13,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${user.referralsToday}/5 today',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              '${user.referralCount} total',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -234,12 +249,34 @@ class ProfilePage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '💰 Earn 20 coins for each friend who registers!',
+                      user.referralsToday >= 5
+                          ? 'Daily referral limit reached (5/5). Try again tomorrow!'
+                          : '💰 Earn 10 coins for each friend who registers! (${user.referralsToday}/5 today)',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: user.referralsToday >= 5
+                            ? AppColors.gold
+                            : Colors.white.withValues(alpha: 0.9),
                         fontSize: 12,
+                        fontWeight: user.referralsToday >= 5
+                            ? FontWeight.w700
+                            : FontWeight.normal,
                       ),
                     ),
+                    if (user.referredBy == null) ...[
+                      const SizedBox(height: 6),
+                      GestureDetector(
+                        onTap: () =>
+                            _showApplyReferralDialog(context, ref, user.uid),
+                        child: const Text(
+                          'Have a friend\'s code? Tap here to enter',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               )
@@ -704,4 +741,66 @@ class _AnimatedMenuItemState extends State<_AnimatedMenuItem>
       ],
     );
   }
+}
+
+void _showApplyReferralDialog(
+    BuildContext context, WidgetRef ref, String userId) {
+  final controller = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: const Text('Enter Referral Code'),
+      content: TextField(
+        controller: controller,
+        textCapitalization: TextCapitalization.characters,
+        decoration: const InputDecoration(
+          labelText: 'Referral Code',
+          hintText: 'e.g. FFA1B2C3',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final code = controller.text.trim();
+            if (code.isEmpty) return;
+            Navigator.pop(ctx);
+            try {
+              await ref.read(rewardRepositoryProvider).applyReferralCode(
+                    userId: userId,
+                    referralCode: code,
+                  );
+              ref.invalidate(currentUserProvider);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Referral code applied successfully! 🎉'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            } catch (e) {
+              final msg = e is AppException
+                  ? e.message
+                  : e.toString().replaceFirst('Exception: ', '');
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(msg),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            }
+          },
+          child: const Text('Apply'),
+        ),
+      ],
+    ),
+  );
 }

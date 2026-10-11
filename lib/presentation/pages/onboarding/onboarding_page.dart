@@ -44,7 +44,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     const _OnboardingData(
       emoji: '👥',
       title: 'Invite & Earn',
-      subtitle: 'Invite friends with your unique\nreferral code and earn 20 coins\nfor each successful registration!',
+      subtitle: 'Invite friends with your unique\nreferral code and earn 10 coins\nfor each successful registration!',
       gradient: AppColors.greenGradient,
       bgColor: Color(0xFF001510),
     ),

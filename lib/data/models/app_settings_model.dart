@@ -1,5 +1,5 @@
-// lib/data/models/app_settings_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/constants/app_constants.dart';
 
 class RedeemPackageModel {
   final String name;
@@ -47,6 +47,7 @@ class AppSettingsModel {
   final int dailySpinLimit;
   final int rewardPerAd;
   final int rewardDailyLogin;
+  final int rewardPerReferral;
   final int minimumRedeem;
   final bool maintenanceMode;
   final List<RedeemPackageModel> redeemPackages;
@@ -70,6 +71,7 @@ class AppSettingsModel {
     required this.dailySpinLimit,
     required this.rewardPerAd,
     required this.rewardDailyLogin,
+    this.rewardPerReferral = AppConstants.referralCoins,
     required this.minimumRedeem,
     required this.maintenanceMode,
     required this.redeemPackages,
@@ -87,29 +89,30 @@ class AppSettingsModel {
       dailySpinLimit: 3,
       rewardPerAd: 5,
       rewardDailyLogin: 5,
+      rewardPerReferral: AppConstants.referralCoins,
       minimumRedeem: 2500,
       maintenanceMode: false,
       redeemPackages: [
         RedeemPackageModel(
-          name: '₹100 Reward Code',
+          name: '₹50 Reward Code',
           coins: 2500,
-          value: '₹100',
+          value: '₹50',
           emoji: '💎',
           gradientColors: 'blue',
           popular: false,
         ),
         RedeemPackageModel(
-          name: '₹200 Reward Code',
+          name: '₹100 Reward Code',
           coins: 5000,
-          value: '₹200',
+          value: '₹100',
           emoji: '💎💎',
           gradientColors: 'purple',
           popular: true,
         ),
         RedeemPackageModel(
-          name: '₹400 Reward Code',
+          name: '₹200 Reward Code',
           coins: 10000,
-          value: '₹400',
+          value: '₹200',
           emoji: '💎💎💎',
           gradientColors: 'gold',
           popular: false,
@@ -128,6 +131,12 @@ class AppSettingsModel {
       parsedPackages = (data['redeemPackages'] as List)
           .map((e) => RedeemPackageModel.fromMap(e as Map<String, dynamic>))
           .toList();
+      final hasOutdated = parsedPackages.any(
+        (p) => (p.coins == 2500 && p.value == '₹100') || p.value == '₹400',
+      );
+      if (hasOutdated) {
+        parsedPackages = AppSettingsModel.defaults().redeemPackages;
+      }
     } else {
       parsedPackages = AppSettingsModel.defaults().redeemPackages;
     }
@@ -138,6 +147,8 @@ class AppSettingsModel {
       dailySpinLimit: (data['dailySpinLimit'] ?? 2).toInt(),
       rewardPerAd: (data['rewardPerAd'] ?? 5).toInt(),
       rewardDailyLogin: (data['rewardDailyLogin'] ?? 5).toInt(),
+      rewardPerReferral:
+          (data['rewardPerReferral'] ?? AppConstants.referralCoins).toInt(),
       minimumRedeem: (data['minimumRedeem'] ?? 2500).toInt(),
       maintenanceMode: data['maintenanceMode'] ?? false,
       redeemPackages: parsedPackages,
@@ -155,6 +166,7 @@ class AppSettingsModel {
       'dailySpinLimit': dailySpinLimit,
       'rewardPerAd': rewardPerAd,
       'rewardDailyLogin': rewardDailyLogin,
+      'rewardPerReferral': rewardPerReferral,
       'minimumRedeem': minimumRedeem,
       'maintenanceMode': maintenanceMode,
       'redeemPackages': redeemPackages.map((e) => e.toMap()).toList(),
@@ -171,6 +183,7 @@ class AppSettingsModel {
     int? dailySpinLimit,
     int? rewardPerAd,
     int? rewardDailyLogin,
+    int? rewardPerReferral,
     int? minimumRedeem,
     bool? maintenanceMode,
     List<RedeemPackageModel>? redeemPackages,
@@ -185,6 +198,7 @@ class AppSettingsModel {
       dailySpinLimit: dailySpinLimit ?? this.dailySpinLimit,
       rewardPerAd: rewardPerAd ?? this.rewardPerAd,
       rewardDailyLogin: rewardDailyLogin ?? this.rewardDailyLogin,
+      rewardPerReferral: rewardPerReferral ?? this.rewardPerReferral,
       minimumRedeem: minimumRedeem ?? this.minimumRedeem,
       maintenanceMode: maintenanceMode ?? this.maintenanceMode,
       redeemPackages: redeemPackages ?? this.redeemPackages,

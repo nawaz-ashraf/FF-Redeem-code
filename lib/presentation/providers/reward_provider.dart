@@ -1,5 +1,6 @@
 // lib/presentation/providers/reward_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/errors/app_exception.dart';
 import '../../data/repositories/reward_repository.dart';
 import '../../data/repositories/withdrawal_repository.dart';
 import '../../data/models/withdrawal_model.dart';
@@ -27,8 +28,18 @@ final dailyLimitsProvider = FutureProvider<Map<String, int>>((ref) async {
 /// Call this after every successful reward claim (ad, scratch, spin, daily login).
 void refreshAllRewardData(Ref ref) {
   ref.invalidate(dailyLimitsProvider);
+  ref.invalidate(dailyReferralsProvider);
   ref.invalidate(currentUserProvider);
 }
+
+// Daily referrals count for current user
+final dailyReferralsProvider = FutureProvider<int>((ref) async {
+  final authState = ref.watch(authStateProvider);
+  final userId = authState.value?.uid;
+  if (userId == null) return 0;
+  final repo = ref.watch(rewardRepositoryProvider);
+  return repo.getReferralsToday(userId);
+});
 
 // Withdrawals stream
 final userWithdrawalsProvider =
@@ -134,7 +145,10 @@ class RewardNotifier extends StateNotifier<RewardState> {
       refreshAllRewardData(_ref);
       return result;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      final msg = e is AppException
+          ? e.message
+          : e.toString().replaceFirst('Exception: ', '');
+      state = state.copyWith(isLoading: false, error: msg);
       return null;
     }
   }

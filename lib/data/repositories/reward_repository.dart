@@ -9,8 +9,14 @@ import '../models/transaction_model.dart';
 import 'user_repository.dart';
 
 class RewardRepository {
-  final _firestore = FirebaseService.firestore;
-  final _userRepo = UserRepository();
+  final FirebaseFirestore _firestore;
+  final UserRepository _userRepo;
+
+  RewardRepository({
+    FirebaseFirestore? firestore,
+    UserRepository? userRepo,
+  })  : _firestore = firestore ?? FirebaseService.firestore,
+        _userRepo = userRepo ?? UserRepository(firestore: firestore);
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
@@ -143,18 +149,18 @@ class RewardRepository {
 
   /// Claim daily login bonus with streak tracking
   Future<Map<String, dynamic>> claimDailyLogin(String userId) async {
+    final todayKey = AppUtils.getRewardDayKey();
     final prefs = await _prefs;
-    final today = AppUtils.formatDate(DateTime.now());
     final lastDate = prefs.getString(AppConstants.lastLoginDateKey);
 
-    if (lastDate == today) {
+    if (lastDate == todayKey) {
       throw const LimitExceededException(
-        message: 'You have already claimed your daily login bonus today.',
+        message: 'You have already claimed your daily reward. Come back tomorrow!',
       );
     }
 
     await _userRepo.updateDailyLogin(userId);
-    await prefs.setString(AppConstants.lastLoginDateKey, today);
+    await prefs.setString(AppConstants.lastLoginDateKey, todayKey);
 
     final user = await _userRepo.getUser(userId);
     final streak = user?.dailyStreak ?? 1;
@@ -177,6 +183,7 @@ class RewardRepository {
     required String referralCode,
   }) async {
     final normalizedCode = referralCode.toUpperCase();
+    final todayKey = AppUtils.getRewardDayKey();
 
     // 1. Cannot use own code
     final userDoc = await _firestore
@@ -216,17 +223,66 @@ class RewardRepository {
     }
 
     final inviterId = refQuery.docs.first.id;
-    final inviterCoins = (refQuery.docs.first.data()['coins'] ?? 0).toInt();
+    if (inviterId == userId) {
+      throw const ValidationException(
+        message: 'You cannot use your own referral code.',
+      );
+    }
 
-    // 4. Apply reward to inviter in a transaction
+    // 4. Pre-check daily limit for inviter
+    final dailyRefRef = _firestore
+        .collection(AppConstants.dailyReferralsCollection)
+        .doc('${inviterId}_$todayKey');
+    final dailyRefDocPre = await dailyRefRef.get();
+    if (dailyRefDocPre.exists &&
+        ((dailyRefDocPre.data()?['count'] ?? 0) as num).toInt() >=
+            AppConstants.maxDailyReferrals) {
+      throw const LimitExceededException(
+        message: 'Daily referral limit reached (5/5). Try again tomorrow!',
+      );
+    }
+
+    // 5. Apply reward to inviter atomically in a transaction
     await _firestore.runTransaction((tx) async {
       final inviterRef = _firestore
           .collection(AppConstants.usersCollection)
           .doc(inviterId);
+      final inviterDoc = await tx.get(inviterRef);
+      if (!inviterDoc.exists) {
+        throw const ValidationException(message: 'Referrer account not found.');
+      }
 
+      // Check authoritative daily referral count inside transaction
+      final dailyRefDoc = await tx.get(dailyRefRef);
+      final todayCount = dailyRefDoc.exists
+          ? ((dailyRefDoc.data()?['count'] ?? 0) as num).toInt()
+          : 0;
+
+      if (todayCount >= AppConstants.maxDailyReferrals) {
+        throw const LimitExceededException(
+          message: 'Daily referral limit reached (5/5). Try again tomorrow!',
+        );
+      }
+
+      // Check that this new user was not already rewarded
+      final refRef = _firestore
+          .collection(AppConstants.referralsCollection)
+          .doc(userId);
+      final refDoc = await tx.get(refRef);
+      if (refDoc.exists) {
+        throw const ValidationException(
+          message: 'You have already used a referral code.',
+        );
+      }
+
+      final inviterCoins = ((inviterDoc.data()!['coins'] ?? 0) as num).toInt();
+
+      // Update inviter document
       tx.update(inviterRef, {
         'coins': FieldValue.increment(AppConstants.referralCoins),
         'referralCount': FieldValue.increment(1),
+        'dailyReferralDate': todayKey,
+        'dailyReferralCount': todayCount + 1,
         'totalEarnedCoins': FieldValue.increment(AppConstants.referralCoins),
         'xp': FieldValue.increment(AppConstants.referralCoins),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -252,22 +308,51 @@ class RewardRepository {
         'balanceBefore': inviterCoins,
         'balanceAfter': inviterCoins + AppConstants.referralCoins,
         'referenceId': userId,
-        'description': 'Referral bonus for inviting a new user',
+        'description':
+            'Referral bonus for inviting a new user (${todayCount + 1}/${AppConstants.maxDailyReferrals} today)',
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'completed',
       });
 
-      // Referral record
-      final refRef =
-          _firestore.collection(AppConstants.referralsCollection).doc();
+      // Daily referral tracking record
+      tx.set(
+        dailyRefRef,
+        {
+          'referrerId': inviterId,
+          'dateKey': todayKey,
+          'count': todayCount + 1,
+          'referrals': FieldValue.arrayUnion([userId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      // Dedicated idempotent referral record keyed by userId
       tx.set(refRef, {
         'inviterId': inviterId,
+        'referrerId': inviterId,
         'newUserId': userId,
         'reward': AppConstants.referralCoins,
+        'dateKey': todayKey,
         'status': 'completed',
         'createdAt': FieldValue.serverTimestamp(),
       });
     });
+  }
+
+  /// Get authoritative count of successful referrals for today
+  Future<int> getReferralsToday(String userId) async {
+    final todayKey = AppUtils.getRewardDayKey();
+    try {
+      final doc = await _firestore
+          .collection(AppConstants.dailyReferralsCollection)
+          .doc('${userId}_$todayKey')
+          .get();
+      if (doc.exists) {
+        return ((doc.data()?['count'] ?? 0) as num).toInt();
+      }
+    } catch (_) {}
+    return 0;
   }
 
   // ── LIMITS CHECK ─────────────────────────────────────────
@@ -276,11 +361,38 @@ class RewardRepository {
   Future<Map<String, int>> getDailyLimits(String userId) async {
     final prefs = await _prefs;
     final today = AppUtils.formatDate(DateTime.now());
+    final todayRewardKey = AppUtils.getRewardDayKey();
 
     final lastAdDate = prefs.getString(AppConstants.lastAdRewardDateKey);
     final lastScratchDate = prefs.getString('last_scratch_date');
     final lastSpinDate = prefs.getString('last_spin_date');
     final lastLoginDate = prefs.getString(AppConstants.lastLoginDateKey);
+
+    int loginClaimed = 0;
+    if (lastLoginDate == todayRewardKey) {
+      loginClaimed = 1;
+    } else {
+      // Authoritative check against Firestore to survive logout/login, reinstall, cache clear
+      try {
+        final userDoc = await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(userId)
+            .get();
+        if (userDoc.exists) {
+          final data = userDoc.data()!;
+          final dailyLoginRaw = data['dailyLoginDate'];
+          if (dailyLoginRaw is Timestamp) {
+            final loginDate = dailyLoginRaw.toDate();
+            if (AppUtils.isSameRewardDay(DateTime.now(), loginDate)) {
+              loginClaimed = 1;
+              await prefs.setString(AppConstants.lastLoginDateKey, todayRewardKey);
+            }
+          }
+        }
+      } catch (_) {
+        loginClaimed = lastLoginDate == todayRewardKey ? 1 : 0;
+      }
+    }
 
     return {
       'adsRemaining': lastAdDate == today
@@ -295,7 +407,7 @@ class RewardRepository {
           ? AppConstants.maxDailySpin -
               (prefs.getInt(AppConstants.dailySpinCountKey) ?? 0)
           : AppConstants.maxDailySpin,
-      'loginClaimed': lastLoginDate == today ? 1 : 0,
+      'loginClaimed': loginClaimed,
     };
   }
 }

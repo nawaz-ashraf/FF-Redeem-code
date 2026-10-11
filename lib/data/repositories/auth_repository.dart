@@ -7,12 +7,21 @@ import 'dart:io';
 import '../../core/constants/app_constants.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/services/firebase_service.dart';
+import '../../core/utils/app_utils.dart';
 import '../../core/utils/auth_error_mapper.dart';
 import '../models/user_model.dart';
 
 class AuthRepository {
-  final _auth = FirebaseService.auth;
-  final _firestore = FirebaseService.firestore;
+  final FirebaseAuth? _injectedAuth;
+  final FirebaseFirestore? _injectedFirestore;
+
+  AuthRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
+      : _injectedAuth = auth,
+        _injectedFirestore = firestore;
+
+  FirebaseAuth get _auth => _injectedAuth ?? FirebaseService.auth;
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseService.firestore;
 
   /// Retrieve a stable device identifier
   Future<String> _getDeviceId() async {
@@ -99,8 +108,26 @@ class AuthRepository {
           .limit(1)
           .get();
 
-      if (refQuery.docs.isNotEmpty) {
-        referredBy = refQuery.docs.first.id;
+      if (refQuery.docs.isEmpty) {
+        throw const ValidationException(
+          message: 'Invalid referral code.',
+        );
+      }
+
+      referredBy = refQuery.docs.first.id;
+
+      // Check daily referral limit for referrer
+      final todayKey = AppUtils.getRewardDayKey();
+      final dailyRefDoc = await _firestore
+          .collection(AppConstants.dailyReferralsCollection)
+          .doc('${referredBy}_$todayKey')
+          .get();
+      if (dailyRefDoc.exists &&
+          ((dailyRefDoc.data()?['count'] ?? 0) as num).toInt() >=
+              AppConstants.maxDailyReferrals) {
+        throw const LimitExceededException(
+          message: 'Daily referral limit reached (5/5). Try again tomorrow!',
+        );
       }
     }
 
@@ -150,6 +177,7 @@ class AuthRepository {
 
   /// Award referral bonus to the inviter using a Firestore transaction
   Future<void> _rewardReferrer(String referrerId, String newUserId) async {
+    final todayKey = AppUtils.getRewardDayKey();
     await _firestore.runTransaction((tx) async {
       final referrerRef = _firestore
           .collection(AppConstants.usersCollection)
@@ -157,13 +185,63 @@ class AuthRepository {
       final referrerDoc = await tx.get(referrerRef);
 
       if (!referrerDoc.exists) return;
+
+      final dailyRefRef = _firestore
+          .collection(AppConstants.dailyReferralsCollection)
+          .doc('${referrerId}_$todayKey');
+      final dailyRefDoc = await tx.get(dailyRefRef);
+      final todayCount = dailyRefDoc.exists
+          ? ((dailyRefDoc.data()?['count'] ?? 0) as num).toInt()
+          : 0;
+
+      if (todayCount >= AppConstants.maxDailyReferrals) {
+        throw const LimitExceededException(
+          message: 'Daily referral limit reached (5/5). Try again tomorrow!',
+        );
+      }
+
+      // Check if newUserId was already rewarded
+      final refRef = _firestore
+          .collection(AppConstants.referralsCollection)
+          .doc(newUserId);
+      final refDoc = await tx.get(refRef);
+      if (refDoc.exists) {
+        return; // Already rewarded
+      }
+
       final currentCoins = (referrerDoc.data()!['coins'] ?? 0).toInt();
 
       tx.update(referrerRef, {
         'coins': FieldValue.increment(AppConstants.referralCoins),
         'referralCount': FieldValue.increment(1),
+        'dailyReferralDate': todayKey,
+        'dailyReferralCount': todayCount + 1,
         'totalEarnedCoins': FieldValue.increment(AppConstants.referralCoins),
         'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Daily tracker
+      tx.set(
+        dailyRefRef,
+        {
+          'referrerId': referrerId,
+          'dateKey': todayKey,
+          'count': todayCount + 1,
+          'referrals': FieldValue.arrayUnion([newUserId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      // Save referral record with newUserId as document ID
+      tx.set(refRef, {
+        'inviterId': referrerId,
+        'referrerId': referrerId,
+        'newUserId': newUserId,
+        'reward': AppConstants.referralCoins,
+        'dateKey': todayKey,
+        'status': 'completed',
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       // Log transaction with balance tracking
@@ -177,20 +255,10 @@ class AuthRepository {
         'balanceBefore': currentCoins,
         'balanceAfter': currentCoins + AppConstants.referralCoins,
         'referenceId': newUserId,
-        'description': 'Referral bonus for inviting a new user',
+        'description':
+            'Referral bonus for inviting a new user (${todayCount + 1}/${AppConstants.maxDailyReferrals} today)',
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'completed',
-      });
-
-      // Save referral record
-      final refRef =
-          _firestore.collection(AppConstants.referralsCollection).doc();
-      tx.set(refRef, {
-        'inviterId': referrerId,
-        'newUserId': newUserId,
-        'reward': AppConstants.referralCoins,
-        'status': 'completed',
-        'createdAt': FieldValue.serverTimestamp(),
       });
     });
   }

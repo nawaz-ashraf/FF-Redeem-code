@@ -1,5 +1,6 @@
 // lib/data/models/user_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/utils/app_utils.dart';
 
 class UserModel {
   final String uid;
@@ -33,6 +34,8 @@ class UserModel {
   final String referralCode;
   final String? referredBy;
   final int referralCount;
+  final String? dailyReferralDate;
+  final int dailyReferralCount;
 
   // Withdrawal
   final int withdrawalCount;
@@ -78,6 +81,8 @@ class UserModel {
     required this.referralCode,
     this.referredBy,
     required this.referralCount,
+    this.dailyReferralDate,
+    this.dailyReferralCount = 0,
     required this.withdrawalCount,
     required this.accountStatus,
     required this.isBanned,
@@ -118,6 +123,8 @@ class UserModel {
       referralCode: data['referralCode'] ?? '',
       referredBy: data['referredBy'],
       referralCount: (data['referralCount'] ?? 0).toInt(),
+      dailyReferralDate: data['dailyReferralDate'],
+      dailyReferralCount: (data['dailyReferralCount'] ?? 0).toInt(),
       withdrawalCount: (data['withdrawalCount'] ?? 0).toInt(),
       accountStatus: data['accountStatus'] ?? data['status'] ?? 'active',
       isBanned: data['isBanned'] ?? (data['status'] == 'banned'),
@@ -160,6 +167,8 @@ class UserModel {
       'referralCode': referralCode,
       'referredBy': referredBy,
       'referralCount': referralCount,
+      'dailyReferralDate': dailyReferralDate,
+      'dailyReferralCount': dailyReferralCount,
       'withdrawalCount': withdrawalCount,
       'accountStatus': accountStatus,
       'isBanned': isBanned,
@@ -192,6 +201,8 @@ class UserModel {
     DateTime? lastSpinDate,
     DateTime? lastAdDate,
     DateTime? dailyLoginDate,
+    String? dailyReferralDate,
+    int? dailyReferralCount,
     int? referralCount,
     int? withdrawalCount,
     String? accountStatus,
@@ -225,6 +236,8 @@ class UserModel {
       referralCode: referralCode,
       referredBy: referredBy,
       referralCount: referralCount ?? this.referralCount,
+      dailyReferralDate: dailyReferralDate ?? this.dailyReferralDate,
+      dailyReferralCount: dailyReferralCount ?? this.dailyReferralCount,
       withdrawalCount: withdrawalCount ?? this.withdrawalCount,
       accountStatus: accountStatus ?? this.accountStatus,
       isBanned: isBanned ?? this.isBanned,
@@ -236,6 +249,15 @@ class UserModel {
       achievements: achievements ?? this.achievements,
       fcmToken: fcmToken ?? this.fcmToken,
     );
+  }
+
+  /// Get number of successful referrals on today's UTC calendar day
+  int get referralsToday {
+    final todayKey = AppUtils.getRewardDayKey();
+    if (dailyReferralDate == todayKey) {
+      return dailyReferralCount;
+    }
+    return 0;
   }
 
   /// Helper to parse Firestore Timestamp or null safely

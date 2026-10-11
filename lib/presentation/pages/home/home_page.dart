@@ -361,7 +361,7 @@ class _HomePageState extends ConsumerState<HomePage>
       ),
       RewardCardData(
         title: 'Invite Friends',
-        subtitle: '+20 coins each',
+        subtitle: '+10 coins each',
         emoji: '👥',
         gradient: const LinearGradient(
           colors: [Color(0xFFFF6B6B), Color(0xFFEE0979)],
@@ -483,12 +483,31 @@ class _HomePageState extends ConsumerState<HomePage>
     );
   }
 
-  void _showDailyLogin() {
+  Future<void> _showDailyLogin() async {
     final user = ref.read(currentUserProvider).value;
     if (user == null) return;
-    showDialog(
-      context: context,
-      builder: (_) => DailyLoginDialog(userId: user.uid),
-    );
+
+    final limits =
+        await ref.read(rewardRepositoryProvider).getDailyLimits(user.uid);
+    if ((limits['loginClaimed'] ?? 0) == 1) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'You have already claimed your daily reward. Come back tomorrow!',
+            ),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
+      return;
+    }
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (_) => DailyLoginDialog(userId: user.uid),
+      );
+    }
   }
 }

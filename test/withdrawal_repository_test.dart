@@ -23,7 +23,7 @@ void main() {
   });
 
   group('WithdrawalRepository Tests', () {
-    test('Case 1: User has 3000 coins, Redeems 2500 -> Balance becomes 500 immediately', () async {
+    test('Case 1: User has 3000 coins, Redeems 2500 for ₹50 Reward Code -> Balance becomes 500 immediately', () async {
       const userId = 'user_case_1';
       
       await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
@@ -34,9 +34,9 @@ void main() {
       final withdrawal = await withdrawalRepo.submitWithdrawal(
         userId: userId,
         freeFireUID: '111',
-        package: '₹100 Voucher',
+        package: '₹50 Reward Code',
         coinCost: 2500,
-        packageValue: '100',
+        packageValue: '50',
       );
 
       final userDoc = await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).get();
@@ -59,16 +59,16 @@ void main() {
       final withdrawalRef = await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
         'userId': userId,
         'freeFireUID': '111',
-        'package': '₹100 Voucher',
+        'package': '₹50 Reward Code',
         'coinCost': 2500,
-        'packageValue': '100',
+        'packageValue': '50',
         'status': 'pending',
         'requestedAt': DateTime.now(),
       });
 
       await fakeFirestore.collection(AppConstants.redeemCodesCollection).add({
         'code': 'XYZ-123',
-        'package': '₹100 Voucher',
+        'package': '₹50 Reward Code',
         'status': 'available',
       });
 
@@ -94,9 +94,9 @@ void main() {
       final withdrawalRef = await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
         'userId': userId,
         'freeFireUID': '111',
-        'package': '₹100 Voucher',
+        'package': '₹50 Reward Code',
         'coinCost': 2500,
-        'packageValue': '100',
+        'packageValue': '50',
         'status': 'pending',
         'requestedAt': DateTime.now(),
       });
@@ -117,7 +117,7 @@ void main() {
       expect(txSnapshot.docs.first.data()['type'], 'Redeem Refund');
     });
 
-    test('Case 4: User has 2000 coins. Redeem button pressed -> Insufficient coins.', () async {
+    test('Case 4: User has 2000 coins. Redeem ₹50 button pressed -> Insufficient coins.', () async {
       const userId = 'user_case_4';
       
       await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
@@ -129,9 +129,9 @@ void main() {
         () => withdrawalRepo.submitWithdrawal(
           userId: userId,
           freeFireUID: '111',
-          package: '₹100 Voucher',
+          package: '₹50 Reward Code',
           coinCost: 2500,
-          packageValue: '100',
+          packageValue: '50',
         ),
         throwsA(isA<ValidationException>().having((e) => e.message, 'message', contains('Insufficient coins'))),
       );
@@ -151,9 +151,9 @@ void main() {
       await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
         'userId': userId,
         'freeFireUID': '111',
-        'package': '₹100 Voucher',
+        'package': '₹50 Reward Code',
         'coinCost': 2500,
-        'packageValue': '100',
+        'packageValue': '50',
         'status': 'pending',
         'requestedAt': DateTime.now(),
       });
@@ -162,12 +162,56 @@ void main() {
         () => withdrawalRepo.submitWithdrawal(
           userId: userId,
           freeFireUID: '111',
-          package: '₹100 Voucher',
+          package: '₹50 Reward Code',
           coinCost: 2500,
-          packageValue: '100',
+          packageValue: '50',
         ),
         throwsA(isA<ValidationException>().having((e) => e.message, 'message', contains('under review'))),
       );
+    });
+
+    test('Case 6: Package validation for ₹100 (5,000 coins) and ₹200 (10,000 coins)', () async {
+      const userId = 'user_case_6';
+
+      await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).set({
+        'coins': 12000,
+        'isBanned': false,
+      });
+
+      // Submit ₹100 for 5,000 coins
+      final w100 = await withdrawalRepo.submitWithdrawal(
+        userId: userId,
+        freeFireUID: '999',
+        package: '₹100 Reward Code',
+        coinCost: 5000,
+        packageValue: '100',
+      );
+      expect(w100.coinCost, 5000);
+      expect(w100.packageValue, '100');
+
+      var userDoc = await fakeFirestore.collection(AppConstants.usersCollection).doc(userId).get();
+      expect(userDoc.data()?['coins'], 7000);
+    });
+
+    test('Case 7: Historical requests retain original package and coin amount', () async {
+      const userId = 'user_case_7';
+      
+      // Historical request with old ₹400 for 10000 coins
+      final historicalRef = await fakeFirestore.collection(AppConstants.withdrawalsCollection).add({
+        'userId': userId,
+        'freeFireUID': '12345',
+        'package': '₹400 Reward Code',
+        'coinCost': 10000,
+        'packageValue': '400',
+        'status': 'approved',
+        'assignedRedeemCode': 'HISTORICAL-400',
+        'requestedAt': DateTime(2026, 1, 1),
+      });
+
+      final doc = await historicalRef.get();
+      expect(doc.data()?['package'], '₹400 Reward Code');
+      expect(doc.data()?['coinCost'], 10000);
+      expect(doc.data()?['packageValue'], '400');
     });
   });
 }

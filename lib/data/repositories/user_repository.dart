@@ -2,13 +2,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import '../../core/constants/app_constants.dart';
+import '../../core/errors/app_exception.dart';
 import '../../core/services/firebase_service.dart';
+import '../../core/utils/app_utils.dart';
 import '../models/user_model.dart';
 import '../models/transaction_model.dart';
 
 class UserRepository {
-  final _firestore = FirebaseService.firestore;
-  final _storage = FirebaseService.storage;
+  final FirebaseFirestore _firestore;
+
+  UserRepository({
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseService.firestore;
 
   /// Real-time stream of a user document
   Stream<UserModel?> watchUser(String userId) {
@@ -187,41 +192,79 @@ class UserRepository {
 
   /// Process daily login reward with streak tracking
   Future<void> updateDailyLogin(String userId) async {
+    final todayKey = AppUtils.getRewardDayKey();
     await _firestore.runTransaction((tx) async {
       final userRef = _firestore
           .collection(AppConstants.usersCollection)
           .doc(userId);
       final userDoc = await tx.get(userRef);
 
-      if (!userDoc.exists) return;
+      if (!userDoc.exists) {
+        throw const AuthException(message: 'User not found.');
+      }
 
       final data = userDoc.data()!;
-      final currentCoins = (data['coins'] ?? 0).toInt();
+      if (data['isBanned'] == true || data['accountStatus'] == 'banned') {
+        throw const ValidationException(message: 'Account is suspended.');
+      }
+
       final lastLoginRaw = data['dailyLoginDate'] ?? data['lastLogin'];
       final lastLogin = lastLoginRaw is Timestamp
           ? lastLoginRaw.toDate()
           : null;
-      final now = DateTime.now();
+
+      final nowUtc = DateTime.now().toUtc();
+      final todayMidnight = DateTime.utc(nowUtc.year, nowUtc.month, nowUtc.day);
 
       int newStreak = (data['dailyStreak'] ?? 0).toInt();
 
-      if (lastLogin == null) {
-        newStreak = 1;
-      } else {
-        final dayDiff = DateTime(now.year, now.month, now.day)
-            .difference(DateTime(lastLogin.year, lastLogin.month, lastLogin.day))
-            .inDays;
-        if (dayDiff == 1) {
+      if (lastLogin != null) {
+        final lastLoginUtc = lastLogin.toUtc();
+        final lastMidnight =
+            DateTime.utc(lastLoginUtc.year, lastLoginUtc.month, lastLoginUtc.day);
+        final dayDiff = todayMidnight.difference(lastMidnight).inDays;
+
+        if (dayDiff <= 0) {
+          throw const LimitExceededException(
+            message:
+                'You have already claimed your daily reward. Come back tomorrow!',
+          );
+        } else if (dayDiff == 1) {
           newStreak = newStreak + 1;
           if (newStreak > 7) newStreak = 1;
-        } else if (dayDiff > 1) {
+        } else {
           newStreak = 1;
         }
+      } else {
+        newStreak = 1;
       }
 
+      // Check dailyRewards collection document for this day
+      final dailyRewardRef = _firestore
+          .collection(AppConstants.dailyRewardsCollection)
+          .doc('${userId}_$todayKey');
+      final dailyRewardDoc = await tx.get(dailyRewardRef);
+      if (dailyRewardDoc.exists) {
+        throw const LimitExceededException(
+          message:
+              'You have already claimed your daily reward. Come back tomorrow!',
+        );
+      }
+
+      final currentCoins = (data['coins'] ?? 0).toInt();
       final streakBonus = AppConstants.streakBonuses[newStreak] ??
           AppConstants.dailyLoginCoins;
 
+      // 1. Record daily reward claim doc
+      tx.set(dailyRewardRef, {
+        'userId': userId,
+        'dateKey': todayKey,
+        'coins': streakBonus,
+        'streak': newStreak,
+        'claimedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Update user
       tx.update(userRef, {
         'dailyLoginDate': FieldValue.serverTimestamp(),
         'lastLogin': FieldValue.serverTimestamp(),
@@ -231,6 +274,7 @@ class UserRepository {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
+      // 3. Log transaction
       final txRef = _firestore
           .collection(AppConstants.transactionsCollection)
           .doc();
@@ -251,7 +295,7 @@ class UserRepository {
 
   /// Upload profile picture to Firebase Storage
   Future<String?> uploadProfilePicture(String userId, File file) async {
-    final ref = _storage.ref('profile_pics/$userId.jpg');
+    final ref = FirebaseService.storage.ref('profile_pics/$userId.jpg');
     await ref.putFile(file);
     final url = await ref.getDownloadURL();
 

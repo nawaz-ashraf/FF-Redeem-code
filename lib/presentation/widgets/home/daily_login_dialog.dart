@@ -56,7 +56,7 @@ class _DailyLoginDialogState extends ConsumerState<DailyLoginDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(ref.read(rewardNotifierProvider).error ??
-                'Already claimed today'),
+                'You have already claimed your daily reward. Come back tomorrow!'),
             backgroundColor: AppColors.warning,
           ),
         );

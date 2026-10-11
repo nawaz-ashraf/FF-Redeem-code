@@ -19,10 +19,39 @@ class SettingsRepository {
         .get();
 
     if (!doc.exists) {
-      return AppSettingsModel.defaults();
+      final defaults = AppSettingsModel.defaults();
+      await initializeDefaultSettings();
+      return defaults;
     }
 
-    return AppSettingsModel.fromFirestore(doc);
+    final settings = AppSettingsModel.fromFirestore(doc);
+    // If the Firestore document had the old packages, persist the updated packages safely
+    final rawData = doc.data();
+    if (rawData != null) {
+      final updates = <String, dynamic>{};
+      if (rawData['redeemPackages'] is List) {
+        final list = rawData['redeemPackages'] as List;
+        final hasOld = list.any((e) =>
+            e is Map &&
+            ((e['coins'] == 2500 && e['value'] == '₹100') ||
+                e['value'] == '₹400'));
+        if (hasOld) {
+          updates['redeemPackages'] = AppSettingsModel.defaults()
+              .redeemPackages
+              .map((e) => e.toMap())
+              .toList();
+          updates['minimumRedeem'] = 2500;
+        }
+      }
+      if (rawData['rewardPerReferral'] == 20) {
+        updates['rewardPerReferral'] = AppConstants.referralCoins;
+      }
+      if (updates.isNotEmpty) {
+        await updateSettings(updates);
+      }
+    }
+
+    return settings;
   }
 
   /// Stream app settings for real-time updates
