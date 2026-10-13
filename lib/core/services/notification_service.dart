@@ -9,28 +9,36 @@ class NotificationService {
 
   /// Initialize FCM notification handling
   static Future<void> initialize() async {
-    // Request notification permission
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
+    try {
+      // Request notification permission
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
 
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      // Handle foreground messages
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
-    // Handle background/terminated messages
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+      // Handle background/terminated messages
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
-    // Check for initial message (app opened from terminated state)
-    final initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNotificationTap(initialMessage);
+      // Check for initial message (app opened from terminated state)
+      final initialMessage = await _messaging.getInitialMessage();
+      if (initialMessage != null) {
+        _handleNotificationTap(initialMessage);
+      }
+
+      // Subscribe to topics asynchronously without blocking startup
+      try {
+        await _messaging.subscribeToTopic('all_users');
+      } catch (e) {
+        debugPrint('FCM subscribeToTopic non-fatal warning: $e');
+      }
+    } catch (e, stack) {
+      debugPrint('NotificationService initialization non-fatal error: $e\n$stack');
     }
-
-    // Subscribe to topics
-    await _messaging.subscribeToTopic('all_users');
   }
 
   /// Get the current FCM token

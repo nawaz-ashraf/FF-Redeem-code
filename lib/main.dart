@@ -1,4 +1,4 @@
-// lib/main.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,26 +32,51 @@ void main() async {
     ),
   );
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase safely
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Setup Crashlytics error handlers for both Flutter and asynchronous Dart errors
+    FlutterError.onError = (details) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true; // Prevents process termination
+    };
+  } catch (e, stack) {
+    debugPrint('Firebase.initializeApp non-fatal error: $e\n$stack');
+  }
 
   // Initialize App Check (Play Integrity in prod, Debug in dev)
-  await AppCheckService.initialize();
+  try {
+    await AppCheckService.initialize();
+  } catch (e) {
+    debugPrint('AppCheckService non-fatal error: $e');
+  }
 
   // Initialize Notifications
-  await NotificationService.initialize();
+  try {
+    await NotificationService.initialize();
+  } catch (e) {
+    debugPrint('NotificationService non-fatal error: $e');
+  }
 
   // Initialize Ads asynchronously
-  // We do not await this to prevent blocking the main thread, which can cause an ANR.
-  AdService.initialize();
-
-  // Crashlytics
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  try {
+    AdService.initialize();
+  } catch (e) {
+    debugPrint('AdService non-fatal error: $e');
+  }
 
   // Hive (for local storage if needed later)
-  await Hive.initFlutter();
+  try {
+    await Hive.initFlutter();
+  } catch (e) {
+    debugPrint('Hive.initFlutter non-fatal error: $e');
+  }
 
   debugPrint('App Started');
   runApp(const ProviderScope(child: FFRedeemApp()));

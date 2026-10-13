@@ -9,6 +9,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../providers/app_update_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/update_dialog.dart';
+import '../../../data/models/app_update_status.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -34,49 +35,69 @@ class _SplashPageState extends ConsumerState<SplashPage>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 2800));
-    if (!mounted) return;
+    try {
+      await Future.delayed(const Duration(milliseconds: 2800));
+      if (!mounted) return;
 
-    // --- App update gate (see docs/APP_UPDATE.md) ---
-    // Fetches Firestore config, compares versions, fails open on error.
-    final updateStatus = await ref.read(appUpdateCheckProvider.future);
-    if (!mounted) return;
-
-    if (updateStatus != null && updateStatus.updateAvailable) {
-      if (updateStatus.forceUpdate) {
-        // Blocking: show dialog and stop — user cannot reach home/login.
-        if (!context.mounted) return;
-        await showUpdateDialog(context, updateStatus);
-        return;
+      // --- App update gate (see docs/APP_UPDATE.md) ---
+      // Fetches Firestore config, compares versions, fails open on error.
+      AppUpdateStatus? updateStatus;
+      try {
+        updateStatus = await ref
+            .read(appUpdateCheckProvider.future)
+            .timeout(const Duration(seconds: 4));
+      } catch (e) {
+        debugPrint('appUpdateCheckProvider non-fatal error: $e');
       }
 
-      // Optional: user may tap "Later" to continue, or "Update" to open store.
       if (!mounted) return;
-      final shouldContinue = await showUpdateDialog(context, updateStatus);
-      if (!shouldContinue || !mounted) return;
-    }
 
-    await _continueNavigation();
+      if (updateStatus != null && updateStatus.updateAvailable) {
+        if (updateStatus.forceUpdate) {
+          // Blocking: show dialog and stop — user cannot reach home/login.
+          if (!context.mounted) return;
+          await showUpdateDialog(context, updateStatus);
+          return;
+        }
+
+        // Optional: user may tap "Later" to continue, or "Update" to open store.
+        if (!mounted) return;
+        final shouldContinue = await showUpdateDialog(context, updateStatus);
+        if (!shouldContinue || !mounted) return;
+      }
+
+      await _continueNavigation();
+    } catch (e, stack) {
+      debugPrint('Splash navigation exception caught, falling back: $e\n$stack');
+      await _continueNavigation();
+    }
   }
 
   /// Existing splash routing: home if logged in, else onboarding or login.
   Future<void> _continueNavigation() async {
     if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
 
-    final isOnboardingDone =
-        prefs.getBool(AppConstants.isOnboardingDoneKey) ?? false;
+      final isOnboardingDone =
+          prefs.getBool(AppConstants.isOnboardingDoneKey) ?? false;
 
-    final authState = ref.read(authStateProvider);
+      final authState = ref.read(authStateProvider);
 
-    if (authState.value != null) {
-      context.go('/home');
-    } else if (!isOnboardingDone) {
-      context.go('/onboarding');
-    } else {
-      context.go('/login');
+      if (authState.value != null) {
+        context.go('/home');
+      } else if (!isOnboardingDone) {
+        context.go('/onboarding');
+      } else {
+        context.go('/login');
+      }
+    } catch (e) {
+      debugPrint('_continueNavigation fallback: $e');
+      if (mounted) {
+        context.go('/login');
+      }
     }
   }
 

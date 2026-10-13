@@ -118,7 +118,7 @@ class _HomePageState extends ConsumerState<HomePage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hello, ${user.name.split(' ').first}! 👋',
+                          'Hello, ${user.name.trim().isEmpty ? 'User' : user.name.trim().split(' ').first}! 👋',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,

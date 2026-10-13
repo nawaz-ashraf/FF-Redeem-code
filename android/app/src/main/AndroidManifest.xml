@@ -34,14 +34,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Firebase Cloud Messaging -->
-        <service
-            android:name="com.google.firebase.messaging.FirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
-            </intent-filter>
-        </service>
 
         <!-- AdMob App ID - Replace with real ID -->
         <meta-data

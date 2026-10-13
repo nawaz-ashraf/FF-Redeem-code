@@ -96,12 +96,19 @@ class UserModel {
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final rawData = doc.data();
+    final data = (rawData is Map<String, dynamic>) ? rawData : <String, dynamic>{};
+    final rawUuid = data['uuid']?.toString() ?? doc.id;
+    final fallbackId = rawUuid.length >= 8
+        ? rawUuid.substring(0, 8).toUpperCase()
+        : rawUuid.toUpperCase();
+    final userIdVal = data['userId']?.toString() ?? fallbackId;
+
     return UserModel(
       uid: doc.id,
       name: data['name'] ?? '',
-      uuid: data['uuid'] ?? doc.id,
-      userId: data['userId'] ?? (data['uuid'] != null ? data['uuid'].toString().substring(0, 8).toUpperCase() : doc.id.substring(0, 8).toUpperCase()),
+      uuid: rawUuid,
+      userId: userIdVal,
       deviceId: data['deviceId'] ?? '',
       email: data['email'],
       password: data['password'],

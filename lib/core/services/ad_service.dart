@@ -28,7 +28,11 @@ class AdService {
 
   /// Initialize AdMob SDK
   static Future<void> initialize() async {
-    await MobileAds.instance.initialize();
+    try {
+      await MobileAds.instance.initialize();
+    } catch (e, stack) {
+      debugPrint('AdService.initialize non-fatal error: $e\n$stack');
+    }
   }
 
   // ── REWARDED ADS ─────────────────────────────────────────
